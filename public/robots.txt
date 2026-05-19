@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://r3s-realty.netlify.app/sitemap.xml

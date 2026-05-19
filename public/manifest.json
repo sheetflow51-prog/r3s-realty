@@ -1,0 +1,12 @@
+{
+  "name": "R³S Realty & Developers",
+  "short_name": "R³S Realty",
+  "description": "RERA approved plots in Etmadpur, Agra",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f7f3ed",
+  "theme_color": "#1a5f2a",
+  "icons": [
+    { "src": "/images/logo-full.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
