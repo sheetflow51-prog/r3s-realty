@@ -82,7 +82,7 @@ export default function About() {
             className="space-y-6 body-text text-base md:text-lg max-w-2xl"
           >
             <p>
-              R³S Realty and Developers was founded by{" "}
+              R³S Realty Developers was founded by{" "}
               <span className="text-text">Raju Sharma</span> — a name that
               Etmadpur has known for years. What began as a quiet conviction —
               that families here deserve world-class plotting at honest prices —

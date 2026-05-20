@@ -42,19 +42,19 @@ html.light {
 }
 
 html.dark {
-  --bg-rgb: 13 13 13;
-  --bg-2-rgb: 17 17 17;
-  --bg-card-rgb: 22 22 22;
-  --bg-raised-rgb: 28 28 28;
-  --text-rgb: 232 224 208;
-  --text-muted-rgb: 122 112 96;
+  --bg-rgb: 10 13 10;
+  --bg-2-rgb: 15 19 16;
+  --bg-card-rgb: 20 24 20;
+  --bg-raised-rgb: 28 32 28;
+  --text-rgb: 243 236 220;
+  --text-muted-rgb: 168 153 119;
   --green-rgb: 30 107 48;
   --green-light-rgb: 45 138 66;
-  --gold-rgb: 200 168 75;
-  --gold-light-rgb: 224 192 104;
+  --gold-rgb: 224 192 104;
+  --gold-light-rgb: 240 212 130;
 
-  --border: rgba(232, 224, 208, 0.07);
-  --border-hover: rgba(232, 224, 208, 0.15);
+  --border: rgba(243, 236, 220, 0.08);
+  --border-hover: rgba(243, 236, 220, 0.18);
 
   --bg: rgb(var(--bg-rgb));
   --bg-2: rgb(var(--bg-2-rgb));
@@ -85,7 +85,7 @@ html.dark {
     font-family: "DM Sans", system-ui, sans-serif;
     background-color: var(--bg);
     color: var(--text);
-    font-weight: 300;
+    font-weight: 400;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
@@ -94,8 +94,8 @@ html.dark {
   }
   h1, h2, h3, h4, h5 {
     font-family: "Cormorant Garamond", Georgia, serif;
-    font-weight: 400;
-    letter-spacing: -0.02em;
+    font-weight: 500;
+    letter-spacing: -0.015em;
     color: var(--text);
     line-height: 1.05;
   }
@@ -130,24 +130,25 @@ html.dark {
 
   .display-h1 {
     font-family: "Cormorant Garamond", Georgia, serif;
-    font-weight: 400;
-    font-size: clamp(3rem, 8vw, 7rem);
-    line-height: 1.05;
-    letter-spacing: -0.02em;
+    font-weight: 500;
+    font-size: clamp(2.75rem, 7vw, 6.25rem);
+    line-height: 1.02;
+    letter-spacing: -0.025em;
     color: var(--text);
   }
 
   .display-h2 {
     font-family: "Cormorant Garamond", Georgia, serif;
-    font-weight: 400;
-    font-size: clamp(2rem, 5vw, 4rem);
-    line-height: 1.08;
+    font-weight: 500;
+    font-size: clamp(2rem, 4.5vw, 3.75rem);
+    line-height: 1.06;
     letter-spacing: -0.02em;
     color: var(--text);
   }
 
   .body-text {
-    @apply font-body font-light text-text-muted leading-relaxed;
+    @apply font-body text-text-muted leading-relaxed;
+    font-weight: 400;
   }
 
   .btn-gold {

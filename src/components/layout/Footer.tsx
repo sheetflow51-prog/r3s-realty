@@ -7,6 +7,7 @@ import {
   buildPhoneLink,
   buildWhatsAppLink,
 } from "../../lib/constants";
+import BrandMark from "../shared/BrandMark";
 
 const FOOTER_LINKS = [
   { label: "About Us", href: "#about" },
@@ -61,15 +62,7 @@ export default function Footer() {
     >
       <div className="container-page">
         <div className="flex items-center gap-4 mb-12">
-          <img
-            src="/images/logo-clean.png"
-            alt="R³S Realty and Developers LLP logo"
-            width={120}
-            height={48}
-            className="h-12 w-auto"
-            loading="lazy"
-            decoding="async"
-          />
+          <BrandMark size={56} tone="dark" />
         </div>
 
         <h2
@@ -80,7 +73,7 @@ export default function Footer() {
             color: "rgb(232,224,208)",
           }}
         >
-          R³S Realty &amp; Developers LLP
+          R³S Realty Developers LLP
         </h2>
 
         <p
@@ -103,7 +96,7 @@ export default function Footer() {
               itemType="https://schema.org/PostalAddress"
             >
               <div className="font-display text-base mb-2" style={{ color: "rgb(232,224,208)" }}>
-                R³S Realty &amp; Developers LLP
+                R³S Realty Developers LLP
               </div>
               <span itemProp="streetAddress">S.R. Super Market, Barhan Chauraha</span>
               <br />
@@ -184,7 +177,7 @@ export default function Footer() {
             color: "#7a7060",
           }}
         >
-          <div>© 2026 R³S Realty and Developers · Founded by Raju Sharma</div>
+          <div>© 2026 R³S Realty Developers · Founded by Raju Sharma</div>
           <div className="flex items-center gap-3">
             <a
               href={SOCIAL.facebook}

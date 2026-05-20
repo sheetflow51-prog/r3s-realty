@@ -7,6 +7,7 @@ import {
   buildPhoneLink,
 } from "../../lib/constants";
 import { useTheme } from "../../hooks/useTheme";
+import BrandMark from "../shared/BrandMark";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -53,23 +54,14 @@ export default function Navbar() {
           <a
             href="#home"
             className="flex items-center gap-3"
-            aria-label="R3S Realty home"
-            title="R³S Realty & Developers — Home"
+            aria-label="R³S Realty Developers — Home"
+            title="R³S Realty Developers — Home"
           >
-            <img
-              src="/images/logo-clean.png"
-              alt="R³S Realty and Developers LLP logo"
-              width={120}
-              height={48}
-              className="h-10 md:h-12 w-auto"
-              loading="eager"
-              fetchPriority="high"
-              decoding="async"
-            />
+            <BrandMark size={44} />
             <div className="leading-tight hidden sm:block">
-              <div className="font-display text-xl text-text">R³S Realty</div>
-              <div className="text-[10px] uppercase tracking-[0.25em] text-text-muted">
-                &amp; Developers
+              <div className="font-display text-xl text-text font-medium">R³S Realty</div>
+              <div className="text-[10px] uppercase tracking-[0.32em] text-gold/90 font-semibold">
+                Developers
               </div>
             </div>
           </a>

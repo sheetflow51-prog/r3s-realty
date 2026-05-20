@@ -1,5 +1,5 @@
 export const COMPANY = {
-  name: "R³S Realty & Developers",
+  name: "R³S Realty Developers",
   shortName: "R³S Realty",
   phone: "+91-7983071302",
   phoneDisplay: "+91 79830 71302",

@@ -1,433 +1,419 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { MapPin } from "lucide-react";
+import { MapPin, ArrowUpRight } from "lucide-react";
 import SectionHeading from "../shared/SectionHeading";
 
 /* ─────────────────────────────────────────────
-   NH-19 Growth Corridor — highway milestone viz
+   NH-19 Growth Corridor — investor-brochure map
+   GIS-inspired styling, R³S HQ at center, real
+   highway geometry, no cartoon elements.
    ───────────────────────────────────────────── */
 
-interface Milestone {
+interface Node {
   id: string;
   name: string;
-  km: number;
-  leftPct: number; // % from left for placement above road
-  subline: string;
-  details: string;
+  km: number;          // km from Agra
+  x: number;           // 0–100 (% across SVG)
+  y: number;           // 0–100
+  tag: "featured" | "hq" | "node" | "secondary";
+  oneLiner: string;
   href: string;
-  variant: "featured" | "primary" | "hq" | "muted";
-  badge?: string;
-  ribbon?: string;
 }
 
-const MILESTONES: Milestone[] = [
+const NODES: Node[] = [
+  {
+    id: "agra",
+    name: "Agra",
+    km: 0,
+    x: 6, y: 58,
+    tag: "node",
+    oneLiner: "Anchor city · NH-19 origin",
+    href: "https://www.google.com/maps/search/Agra/@27.18,78.0,11z",
+  },
   {
     id: "kakua",
-    name: "Kakua-Baad",
+    name: "Kakua–Baad",
     km: 12,
-    leftPct: 20,
-    subline: "100–200 sq.yd | From ₹12L",
-    details:
-      "Adjoining ADA's Atalpuram Township on the Agra–Gwalior road. High appreciation pocket.",
+    x: 22, y: 36,
+    tag: "featured",
+    oneLiner: "Adjoining ADA's Atalpuram Township · 100–200 sq.yd · from ₹12L",
     href: "https://www.google.com/maps/search/Kakua+Bhandai+Atalpuram+Agra/@27.1300,77.9700,12z",
-    variant: "featured",
-    ribbon: "FEATURED",
   },
   {
     id: "khandauli",
     name: "Khandauli",
     km: 18,
-    leftPct: 40,
-    subline: "Railway Junction Area",
-    details:
-      "Agricultural and residential parcels along Etmadpur–Khandauli with steady road-frontage appreciation.",
+    x: 42, y: 50,
+    tag: "node",
+    oneLiner: "Railway junction belt · agri + residential",
     href: "https://www.google.com/maps/search/Khandauli+Agra/@27.2700,78.2200,12z",
-    variant: "primary",
   },
   {
     id: "barhan",
     name: "Barhan",
     km: 22,
-    leftPct: 58,
-    subline: "HQ at S.R. Super Market",
-    details:
-      "Highway-adjacent commercial land at Barhan Chauraha — and the home of R³S Realty's office.",
+    x: 58, y: 56,
+    tag: "hq",
+    oneLiner: "R³S Realty Developers · S.R. Super Market HQ",
     href: "https://www.google.com/maps/search/Barhan+Etmadpur+road/@27.2400,78.2500,12z",
-    variant: "hq",
-    badge: "R³S HQ",
+  },
+  {
+    id: "etmadpur",
+    name: "Etmadpur",
+    km: 16,
+    x: 50, y: 64,
+    tag: "secondary",
+    oneLiner: "Saroj Residency · Sawai Dham",
+    href: "https://www.google.com/maps/search/Sawai+Dham+Ashram+Etmadpur+Agra/@27.2308,78.2614,13z",
   },
   {
     id: "tundla",
-    name: "Tundla",
+    name: "Tundla Junction",
     km: 35,
-    leftPct: 75,
-    subline: "Railway Station Proximity",
-    details:
-      "Premium plots within easy reach of Tundla Junction — strong growth on the NH-19 corridor.",
+    x: 84, y: 48,
+    tag: "node",
+    oneLiner: "Major rail junction · NH-19 corridor terminus",
     href: "https://www.google.com/maps/search/Tundla+Etmadpur+Agra/@27.2200,78.2700,11z",
-    variant: "muted",
   },
 ];
 
-const KM_MARKERS: { km: number; leftPct: number }[] = [
-  { km: 0, leftPct: 2 },
-  { km: 12, leftPct: 20 },
-  { km: 18, leftPct: 40 },
-  { km: 25, leftPct: 62 },
-  { km: 35, leftPct: 78 },
-];
-
-const AMENITY_ICONS: { emoji: string; label: string; leftPct: number }[] = [
-  { emoji: "🏫", label: "Schools near Etmadpur", leftPct: 28 },
-  { emoji: "🏥", label: "Hospital — Khandauli", leftPct: 46 },
-  { emoji: "🛤️", label: "Tundla Railway Junction", leftPct: 80 },
-];
-
-function boardColor(variant: Milestone["variant"]) {
-  switch (variant) {
+function nodeColor(tag: Node["tag"]) {
+  switch (tag) {
     case "featured":
-      return {
-        bg: "linear-gradient(135deg, #e0c068, #a07820)",
-        text: "#0a1a0a",
-        border: "1px solid rgba(200,168,75,0.9)",
-      };
-    case "primary":
-      return {
-        bg: "linear-gradient(135deg, #1e6b30, #2d8a42)",
-        text: "#f0ebe2",
-        border: "1px solid rgba(45,138,66,0.7)",
-      };
+      return { ring: "#e0c068", dot: "#e0c068", text: "#0a0d0a" };
     case "hq":
-      return {
-        bg: "linear-gradient(135deg, #163d20, #2d8a42)",
-        text: "#f0ebe2",
-        border: "1px solid rgba(45,138,66,0.7)",
-      };
-    case "muted":
+      return { ring: "#2d8a42", dot: "#2d8a42", text: "#f7efdc" };
+    case "secondary":
+      return { ring: "rgba(224,192,104,0.65)", dot: "rgba(224,192,104,0.85)", text: "#0a0d0a" };
+    case "node":
     default:
-      return {
-        bg: "linear-gradient(135deg, #2c3a2e, #3a5b3a)",
-        text: "#f0ebe2",
-        border: "1px solid rgba(58,91,58,0.7)",
-      };
+      return { ring: "rgba(247,239,220,0.55)", dot: "rgba(247,239,220,0.85)", text: "#0a0d0a" };
   }
 }
 
-function CarSVG({ className = "" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 48 20" className={className} aria-hidden>
-      <g fill="#c8a84b">
-        <path d="M2 14 L8 14 L11 8 L34 8 L40 14 L46 14 L46 17 L2 17 Z" />
-        <rect x="13" y="9" width="8" height="4" fill="#0a1a0a" />
-        <rect x="23" y="9" width="8" height="4" fill="#0a1a0a" />
-      </g>
-      <circle cx="11" cy="17" r="2.5" fill="#0a1a0a" />
-      <circle cx="37" cy="17" r="2.5" fill="#0a1a0a" />
-    </svg>
-  );
-}
+/* SVG path for the NH-19 — a soft S-curve through the nodes */
+const NH19_PATH = "M 4 60 C 18 30, 32 40, 45 50 C 58 60, 72 50, 86 48 L 96 46";
 
-function Signboard({
-  milestone,
-}: {
-  milestone: Milestone;
-}) {
-  const c = boardColor(milestone.variant);
-  const [hover, setHover] = useState(false);
-  return (
-    <a
-      href={milestone.href}
-      target="_blank"
-      rel="noopener noreferrer"
-      title={`${milestone.name} on Google Maps`}
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      onFocus={() => setHover(true)}
-      onBlur={() => setHover(false)}
-      className="absolute -translate-x-1/2 flex flex-col items-center group focus:outline-none"
-      style={{
-        left: `${milestone.leftPct}%`,
-        top: 24,
-        zIndex: 4,
-      }}
-    >
-      {/* Board */}
-      <div
-        className="relative px-4 py-3 shadow-lg transition-transform duration-300 group-hover:-translate-y-1"
-        style={{
-          background: c.bg,
-          color: c.text,
-          border: c.border,
-          minWidth: 156,
-          borderRadius: 4,
-        }}
-      >
-        {milestone.ribbon && (
-          <div
-            className="absolute -top-3 -right-3 text-[9px] font-bold uppercase tracking-[0.18em] px-2 py-1"
-            style={{
-              background: "#c92a2a",
-              color: "#fff",
-              borderRadius: 2,
-              boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
-            }}
-          >
-            {milestone.ribbon}
-          </div>
-        )}
-        {milestone.badge && (
-          <div
-            className="absolute -top-2 -left-2 text-[9px] font-bold uppercase tracking-[0.18em] px-2 py-1"
-            style={{
-              background: "#c8a84b",
-              color: "#0a1a0a",
-              borderRadius: 2,
-            }}
-          >
-            {milestone.badge}
-          </div>
-        )}
-        <div
-          className="font-display text-base leading-tight"
-          style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
-        >
-          {milestone.name} | {milestone.km} km from Agra
-        </div>
-        <div
-          className="mt-1 text-[10px] uppercase tracking-[0.15em] font-light"
-          style={{ opacity: 0.85 }}
-        >
-          {milestone.subline}
-        </div>
-      </div>
+function CorridorMap() {
+  const [hovered, setHovered] = useState<string | null>(null);
 
-      {/* Pole */}
-      <div
-        style={{
-          width: 4,
-          height: 70,
-          background:
-            "linear-gradient(to bottom, #6a6a6a, #3a3a3a)",
-          marginTop: -2,
-        }}
-        aria-hidden
-      />
-
-      {/* Hover details card */}
-      {hover && (
-        <motion.div
-          initial={{ opacity: 0, y: -6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
-          className="absolute pointer-events-none"
-          style={{
-            top: -110,
-            left: "50%",
-            transform: "translateX(-50%)",
-            width: 240,
-            background: "rgba(10,20,10,0.95)",
-            border: "1px solid rgba(200,168,75,0.5)",
-            borderRadius: 4,
-            padding: "10px 14px",
-            color: "#e8e0d0",
-            boxShadow: "0 12px 30px rgba(0,0,0,0.5)",
-            zIndex: 10,
-          }}
-        >
-          <div className="text-[10px] uppercase tracking-[0.22em] text-gold mb-1">
-            View on Google Maps →
-          </div>
-          <div className="text-[12px] leading-snug font-light">
-            {milestone.details}
-          </div>
-        </motion.div>
-      )}
-    </a>
-  );
-}
-
-function NH19Corridor() {
   return (
     <div
       className="relative w-full overflow-hidden corridor-shell"
       style={{
-        height: 520,
-        borderRadius: 4,
+        height: 540,
+        borderRadius: 2,
+        border: "1px solid rgba(224,192,104,0.18)",
       }}
     >
-      {/* Sky / background */}
+      {/* Background tint */}
       <div className="absolute inset-0 corridor-bg" aria-hidden />
 
-      {/* Title overlay */}
-      <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none z-10">
-        <div
-          className="font-display text-base md:text-lg"
-          style={{
-            color: "var(--gold)",
-            fontFamily: "'Cormorant Garamond', Georgia, serif",
-          }}
-        >
-          NH-19 Growth Corridor
-        </div>
-        <div
-          className="text-[10px] uppercase tracking-[0.25em]"
-          style={{ color: "var(--text-muted)" }}
-        >
-          Hover a signboard for details
-        </div>
-      </div>
-
-      {/* Milestones (signboards above road) */}
-      {MILESTONES.map((m) => (
-        <Signboard key={m.id} milestone={m} />
-      ))}
-
-      {/* Amenity icons just above road */}
-      {AMENITY_ICONS.map((a) => (
-        <div
-          key={a.label}
-          className="absolute -translate-x-1/2"
-          title={a.label}
-          aria-label={a.label}
-          style={{
-            left: `${a.leftPct}%`,
-            top: "calc(50% - 56px)",
-            fontSize: 22,
-            filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.35))",
-            zIndex: 3,
-          }}
-        >
-          {a.emoji}
-        </div>
-      ))}
-
-      {/* Road strip — center horizontal */}
-      <div
-        className="absolute left-0 right-0"
-        style={{
-          top: "calc(50% - 4px)",
-          height: 8,
-          background: "linear-gradient(to bottom, #d4a542, #b88f30)",
-          boxShadow: "0 4px 12px rgba(0,0,0,0.35), 0 -2px 6px rgba(0,0,0,0.2)",
-          zIndex: 2,
-        }}
+      {/* Grid (GIS feel) */}
+      <svg
+        className="absolute inset-0 w-full h-full pointer-events-none"
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
         aria-hidden
       >
-        {/* Dashed white center line */}
-        <div
-          className="absolute road-dashes"
-          style={{
-            left: 0,
-            right: 0,
-            top: "calc(50% - 1px)",
-            height: 2,
-          }}
+        <defs>
+          <pattern id="grid-fine" width="2" height="2" patternUnits="userSpaceOnUse">
+            <path d="M 2 0 L 0 0 0 2" fill="none" stroke="rgba(247,239,220,0.05)" strokeWidth="0.1" />
+          </pattern>
+          <pattern id="grid-bold" width="10" height="10" patternUnits="userSpaceOnUse">
+            <path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(247,239,220,0.09)" strokeWidth="0.15" />
+          </pattern>
+          <radialGradient id="corridor-glow" cx="58%" cy="56%" r="40%">
+            <stop offset="0%" stopColor="rgba(45,138,66,0.18)" />
+            <stop offset="100%" stopColor="rgba(45,138,66,0)" />
+          </radialGradient>
+          <linearGradient id="nh19" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#a07820" />
+            <stop offset="50%" stopColor="#e0c068" />
+            <stop offset="100%" stopColor="#a07820" />
+          </linearGradient>
+        </defs>
+
+        <rect width="100" height="100" fill="url(#grid-fine)" />
+        <rect width="100" height="100" fill="url(#grid-bold)" />
+        <rect width="100" height="100" fill="url(#corridor-glow)" />
+
+        {/* Yamuna Expressway hint — secondary route */}
+        <path
+          d="M 0 80 C 30 75, 60 70, 100 65"
+          stroke="rgba(247,239,220,0.18)"
+          strokeWidth="0.4"
+          strokeDasharray="1.2 1"
+          fill="none"
         />
-      </div>
 
-      {/* NH-19 label at left edge */}
-      <div
-        className="absolute"
-        style={{
-          left: 12,
-          top: "calc(50% + 14px)",
-          fontFamily: "'DM Sans', system-ui, sans-serif",
-          fontSize: 10,
-          letterSpacing: "0.3em",
-          textTransform: "uppercase",
-          color: "var(--gold)",
-          background: "rgba(0,0,0,0.45)",
-          padding: "4px 8px",
-          borderRadius: 2,
-          zIndex: 3,
-        }}
-      >
-        NH-19 Agra — Kolkata
-      </div>
+        {/* NH-19 main spine */}
+        <path
+          d={NH19_PATH}
+          stroke="url(#nh19)"
+          strokeWidth="1.2"
+          strokeLinecap="round"
+          fill="none"
+        />
+        {/* Glow under road */}
+        <path
+          d={NH19_PATH}
+          stroke="rgba(224,192,104,0.25)"
+          strokeWidth="3"
+          strokeLinecap="round"
+          fill="none"
+        />
+        {/* Centerline dashes */}
+        <path
+          d={NH19_PATH}
+          stroke="rgba(255,255,255,0.7)"
+          strokeWidth="0.18"
+          strokeDasharray="1 1.4"
+          fill="none"
+          className="corridor-dashes"
+        />
 
-      {/* km markers below road */}
-      {KM_MARKERS.map((m) => (
-        <div
-          key={m.km}
-          className="absolute -translate-x-1/2"
-          style={{
-            left: `${m.leftPct}%`,
-            top: "calc(50% + 22px)",
-            zIndex: 3,
-          }}
-          aria-hidden
-        >
-          <div
-            style={{
-              width: 1,
-              height: 10,
-              background: "var(--gold)",
-              margin: "0 auto",
-              opacity: 0.6,
-            }}
-          />
-          <div
-            className="text-[10px] mt-1 uppercase tracking-[0.18em]"
-            style={{ color: "var(--text-muted)" }}
+        {/* Compass rose */}
+        <g transform="translate(92,12)" opacity="0.55">
+          <circle r="3.2" fill="none" stroke="rgba(224,192,104,0.5)" strokeWidth="0.18" />
+          <path d="M 0 -2.6 L 0.6 0 L 0 2.6 L -0.6 0 Z" fill="#e0c068" />
+          <text
+            x="0" y="-3.6"
+            textAnchor="middle"
+            fontSize="1.8"
+            fill="#e0c068"
+            fontFamily="'DM Sans', sans-serif"
+            fontWeight="600"
           >
-            {m.km} km
-          </div>
-        </div>
-      ))}
+            N
+          </text>
+        </g>
 
-      {/* Moving car */}
-      <div
-        className="absolute corridor-car"
-        style={{
-          top: "calc(50% - 20px)",
-          left: 0,
-          width: 48,
-          height: 20,
-          zIndex: 4,
-          pointerEvents: "none",
-        }}
-        aria-hidden
-      >
-        <CarSVG className="w-full h-full" />
+        {/* Scale bar */}
+        <g transform="translate(4,92)" opacity="0.7">
+          <rect x="0" y="0" width="20" height="0.9" fill="rgba(247,239,220,0.6)" />
+          <rect x="0" y="0" width="10" height="0.9" fill="#e0c068" />
+          <text
+            x="0" y="-1"
+            fontSize="1.8"
+            fill="rgba(247,239,220,0.7)"
+            fontFamily="'DM Sans', sans-serif"
+            letterSpacing="0.05em"
+          >
+            0
+          </text>
+          <text
+            x="20" y="-1"
+            fontSize="1.8"
+            fill="rgba(247,239,220,0.7)"
+            fontFamily="'DM Sans', sans-serif"
+            letterSpacing="0.05em"
+            textAnchor="end"
+          >
+            40 km
+          </text>
+        </g>
+
+        {/* Connector lines from each non-HQ node to HQ (dashed faint) */}
+        {NODES.filter((n) => n.tag !== "hq").map((n) => {
+          const hq = NODES.find((x) => x.tag === "hq")!;
+          return (
+            <line
+              key={`l-${n.id}`}
+              x1={n.x}
+              y1={n.y}
+              x2={hq.x}
+              y2={hq.y}
+              stroke="rgba(224,192,104,0.18)"
+              strokeWidth="0.18"
+              strokeDasharray="0.6 0.8"
+            />
+          );
+        })}
+      </svg>
+
+      {/* Title strip */}
+      <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none z-10">
+        <div className="flex items-baseline gap-3">
+          <span
+            className="font-display"
+            style={{ fontSize: 18, color: "#e0c068", fontWeight: 600, letterSpacing: "0.01em" }}
+          >
+            NH-19 Growth Corridor
+          </span>
+          <span
+            className="text-[10px] uppercase font-semibold"
+            style={{ color: "rgba(247,239,220,0.5)", letterSpacing: "0.32em" }}
+          >
+            Agra → Tundla → Kanpur
+          </span>
+        </div>
+        <span
+          className="text-[10px] uppercase font-semibold hidden sm:inline-flex items-center gap-2"
+          style={{ color: "rgba(247,239,220,0.45)", letterSpacing: "0.32em" }}
+        >
+          <span style={{ width: 8, height: 8, background: "#2d8a42", borderRadius: "50%" }} />
+          R³S HQ
+          <span className="mx-2" />
+          <span style={{ width: 8, height: 8, background: "#e0c068", borderRadius: "50%" }} />
+          Featured
+        </span>
       </div>
 
-      {/* Inline styles via component */}
+      {/* Node markers (absolutely positioned in % coords) */}
+      {NODES.map((n) => {
+        const c = nodeColor(n.tag);
+        const isHover = hovered === n.id;
+        return (
+          <a
+            key={n.id}
+            href={n.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={`${n.name} — open Google Maps`}
+            onMouseEnter={() => setHovered(n.id)}
+            onMouseLeave={() => setHovered(null)}
+            onFocus={() => setHovered(n.id)}
+            onBlur={() => setHovered(null)}
+            className="absolute -translate-x-1/2 -translate-y-1/2 group focus:outline-none"
+            style={{ left: `${n.x}%`, top: `${n.y}%`, zIndex: isHover ? 5 : 2 }}
+          >
+            {/* Marker pin (modern flat) */}
+            <span
+              className="block relative"
+              style={{
+                width: n.tag === "hq" ? 18 : n.tag === "featured" ? 16 : 12,
+                height: n.tag === "hq" ? 18 : n.tag === "featured" ? 16 : 12,
+              }}
+            >
+              {/* Pulse for featured/hq */}
+              {(n.tag === "hq" || n.tag === "featured") && (
+                <span
+                  className="absolute inset-0 rounded-full"
+                  style={{
+                    background: c.ring,
+                    opacity: 0.5,
+                    animation: "corridorPulse 2.4s ease-out infinite",
+                  }}
+                />
+              )}
+              <span
+                className="absolute inset-0 rounded-full"
+                style={{
+                  background: c.dot,
+                  border: `1.5px solid ${n.tag === "hq" ? "#0a0d0a" : "#0a0d0a"}`,
+                  boxShadow: `0 0 0 1.5px ${c.ring}, 0 4px 10px rgba(0,0,0,0.5)`,
+                }}
+              />
+            </span>
+
+            {/* Label chip */}
+            <span
+              className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] font-semibold uppercase"
+              style={{
+                top: "calc(100% + 8px)",
+                color: "rgba(247,239,220,0.85)",
+                letterSpacing: "0.18em",
+                textShadow: "0 1px 4px rgba(0,0,0,0.7)",
+              }}
+            >
+              {n.name}
+              <span style={{ marginLeft: 6, color: "#e0c068", letterSpacing: "0.1em" }}>
+                {n.km} km
+              </span>
+            </span>
+
+            {/* Hover detail card */}
+            {isHover && (
+              <motion.span
+                initial={{ opacity: 0, y: -6, scale: 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.18 }}
+                className="absolute"
+                style={{
+                  left: "50%",
+                  bottom: "calc(100% + 14px)",
+                  transform: "translateX(-50%)",
+                  width: 230,
+                  background: "rgba(10,13,10,0.96)",
+                  border: "1px solid rgba(224,192,104,0.4)",
+                  padding: "12px 14px",
+                  color: "#f7efdc",
+                  boxShadow: "0 16px 32px rgba(0,0,0,0.55)",
+                  borderRadius: 2,
+                  pointerEvents: "none",
+                }}
+              >
+                <span
+                  className="block text-[9px] uppercase font-bold mb-1"
+                  style={{ color: "#e0c068", letterSpacing: "0.32em" }}
+                >
+                  {n.tag === "hq" ? "★ R³S HQ" : n.tag === "featured" ? "★ Featured Belt" : "Growth Node"}
+                </span>
+                <span
+                  className="font-display block leading-tight"
+                  style={{ fontSize: 17, fontWeight: 500 }}
+                >
+                  {n.name}
+                </span>
+                <span
+                  className="block text-[11px] font-light mt-1.5 leading-snug"
+                  style={{ color: "rgba(247,239,220,0.7)" }}
+                >
+                  {n.oneLiner}
+                </span>
+                <span
+                  className="mt-2 inline-flex items-center gap-1 text-[9px] uppercase font-semibold"
+                  style={{ color: "#e0c068", letterSpacing: "0.28em" }}
+                >
+                  View on map <ArrowUpRight className="w-3 h-3" />
+                </span>
+              </motion.span>
+            )}
+          </a>
+        );
+      })}
+
+      {/* Bottom meta strip */}
+      <div
+        className="absolute bottom-0 left-0 right-0 px-5 py-3 flex flex-wrap items-center justify-between gap-2"
+        style={{
+          background: "linear-gradient(to top, rgba(8,12,8,0.85), transparent)",
+        }}
+      >
+        <span
+          className="text-[10px] uppercase font-semibold"
+          style={{ color: "rgba(247,239,220,0.55)", letterSpacing: "0.32em" }}
+        >
+          Source: R³S Realty Developers · land-bank survey 2026
+        </span>
+        <span
+          className="text-[10px] uppercase font-semibold hidden md:inline"
+          style={{ color: "rgba(247,239,220,0.4)", letterSpacing: "0.32em" }}
+        >
+          Hover a node for details
+        </span>
+      </div>
+
       <style>{`
-        .corridor-shell {
-          --corridor-bg: #f0ebe2;
-        }
-        html.dark .corridor-shell {
-          --corridor-bg: #0d1a0d;
-        }
+        .corridor-shell { --corridor-bg: #0e1812; }
+        html.light .corridor-shell { --corridor-bg: #1a2218; }
         .corridor-bg {
           background:
-            radial-gradient(ellipse at 50% 0%, rgba(200,168,75,0.10), transparent 60%),
-            radial-gradient(ellipse at 50% 100%, rgba(45,138,66,0.10), transparent 60%),
+            radial-gradient(ellipse at 35% 30%, rgba(224,192,104,0.07), transparent 55%),
+            radial-gradient(ellipse at 70% 75%, rgba(45,138,66,0.08), transparent 55%),
             var(--corridor-bg);
         }
-        .road-dashes {
-          background-image: repeating-linear-gradient(
-            to right,
-            #ffffff 0,
-            #ffffff 18px,
-            transparent 18px,
-            transparent 34px
-          );
-          animation: corridor-dash 1.2s linear infinite;
+        @keyframes corridorPulse {
+          0% { transform: scale(1); opacity: 0.55; }
+          100% { transform: scale(2.6); opacity: 0; }
         }
-        @keyframes corridor-dash {
-          from { background-position-x: 0; }
-          to { background-position-x: -34px; }
+        @keyframes corridorDash {
+          to { stroke-dashoffset: -20; }
         }
-        .corridor-car {
-          animation: corridor-drive 8s linear infinite;
-        }
-        @keyframes corridor-drive {
-          0% { transform: translateX(-60px); }
-          100% { transform: translateX(calc(100vw + 60px)); }
-        }
+        .corridor-dashes { animation: corridorDash 4s linear infinite; }
         @media (prefers-reduced-motion: reduce) {
-          .road-dashes, .corridor-car { animation: none; }
+          .corridor-dashes { animation: none; }
         }
       `}</style>
     </div>
@@ -445,7 +431,7 @@ const BELTS: {
     tag: "Featured",
     title: "Kakua–Baad Belt",
     text:
-      "Strategic land holdings near the Kakua–Baad belt — adjoining UP Government's flagship Atalpuram Township by ADA on Gwalior Road. High appreciation expected.",
+      "Strategic land adjacent to UP Govt's Atalpuram Township (ADA) on the Agra–Gwalior corridor. Earliest appreciation, deepest discount.",
     href: "https://www.google.com/maps/search/Kakua+Bhandai+Atalpuram+Agra/@27.1300,77.9700,12z",
     featured: true,
   },
@@ -453,7 +439,7 @@ const BELTS: {
     tag: "Belt 01",
     title: "Etmadpur–Khandauli Road",
     text:
-      "Strategic agricultural and residential plots along the Etmadpur–Khandauli corridor. Excellent road frontage and rapid appreciation.",
+      "Agricultural and residential parcels along the Khandauli junction belt — strong road frontage, rapid appreciation history.",
     href: "https://www.google.com/maps/search/Khandauli+Agra/@27.2700,78.2200,12z",
     featured: false,
   },
@@ -461,7 +447,7 @@ const BELTS: {
     tag: "Belt 02",
     title: "Etmadpur–Barhan Road",
     text:
-      "Highway-adjacent land parcels with direct connectivity to Barhan Chauraha. Ideal for commercial development. R³S HQ at S.R. Super Market is here.",
+      "Highway-adjacent commercial land at Barhan Chauraha. Home to R³S Realty Developers' HQ at S.R. Super Market.",
     href: "https://www.google.com/maps/search/Barhan+Etmadpur+road/@27.2400,78.2500,12z",
     featured: false,
   },
@@ -469,7 +455,7 @@ const BELTS: {
     tag: "Belt 03",
     title: "Tundla–Etmadpur–Agra Belt",
     text:
-      "Premium plots along the high-growth Tundla–Etmadpur–Agra corridor. Connected to NH-19 with strong appreciation history.",
+      "Premium plots along the high-growth Tundla corridor with direct NH-19 access and rail proximity.",
     href: "https://www.google.com/maps/search/Tundla+Etmadpur+Agra/@27.2200,78.2700,11z",
     featured: false,
   },
@@ -533,7 +519,7 @@ export default function LandBank() {
           <SectionHeading
             title="NH-19 Growth Corridor | Land Investment Near Agra"
             emWord="NH-19"
-            subtitle="Beyond our active projects, R³S Realty holds prime land across four strategic pockets around Agra — including the high-potential Kakua–Baad belt adjoining UP Government's flagship Atalpuram township. Direct sale, investor partnerships, and custom development — all available."
+            subtitle="Beyond our active projects, R³S Realty Developers holds prime land across four strategic pockets around Agra — including the high-potential Kakua–Baad belt adjoining UP Government's flagship Atalpuram township."
           />
         </div>
 
@@ -541,9 +527,9 @@ export default function LandBank() {
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 0.8 }}
+          transition={{ duration: 0.9 }}
         >
-          <NH19Corridor />
+          <CorridorMap />
         </motion.div>
 
         {/* Belt cards — 2x2 dark glass */}
@@ -573,41 +559,44 @@ export default function LandBank() {
             >
               {belt.featured && (
                 <div
-                  className="absolute top-3 right-4 text-[10px] uppercase tracking-[0.22em] px-2 py-1"
+                  className="absolute top-3 right-4 text-[10px] uppercase font-bold px-2 py-1"
                   style={{
                     color: "#0a1a0a",
                     background: "var(--gold)",
+                    letterSpacing: "0.22em",
+                    borderRadius: 2,
                   }}
                 >
                   ★ Featured
                 </div>
               )}
               <div
-                className="text-[10px] uppercase tracking-[0.25em] mb-3"
-                style={{ color: "#c8a84b" }}
+                className="text-[10px] uppercase font-semibold mb-3"
+                style={{ color: "#e0c068", letterSpacing: "0.32em" }}
               >
                 {belt.tag}
               </div>
               <h3
                 className="font-display text-2xl md:text-3xl"
                 style={{
-                  color: "rgb(232,224,208)",
+                  color: "rgb(243,236,220)",
                   fontFamily: "'Cormorant Garamond', Georgia, serif",
+                  fontWeight: 500,
                 }}
               >
                 {belt.title}
               </h3>
               <p
                 className="mt-3 text-base font-light leading-relaxed"
-                style={{ color: "rgb(160,150,135)" }}
+                style={{ color: "rgb(168,153,119)" }}
               >
                 {belt.text}
               </p>
               <div
-                className="mt-4 text-[10px] uppercase tracking-[0.22em]"
-                style={{ color: "#c8a84b" }}
+                className="mt-4 text-[10px] uppercase font-semibold inline-flex items-center gap-1"
+                style={{ color: "#e0c068", letterSpacing: "0.32em" }}
               >
-                View on Google Maps →
+                View on Google Maps <ArrowUpRight className="w-3 h-3" />
               </div>
             </motion.a>
           ))}
@@ -642,15 +631,15 @@ export default function LandBank() {
               >
                 <MapPin className="w-4 h-4 text-gold shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <div className="text-[10px] uppercase tracking-[0.25em] text-gold">
+                  <div className="text-[10px] uppercase font-semibold text-gold" style={{ letterSpacing: "0.32em" }}>
                     {loc.tag}
                   </div>
-                  <div className="font-display text-xl text-text mt-1">
+                  <div className="font-display text-xl text-text mt-1" style={{ fontWeight: 500 }}>
                     {loc.title}
                   </div>
                   <div className="text-sm text-text-muted">{loc.sub}</div>
                 </div>
-                <span className="text-[11px] uppercase tracking-[0.22em] text-text-muted group-hover:text-gold transition-colors">
+                <span className="text-[11px] uppercase font-semibold text-text-muted group-hover:text-gold transition-colors" style={{ letterSpacing: "0.28em" }}>
                   Open Map →
                 </span>
               </a>
@@ -668,7 +657,7 @@ export default function LandBank() {
           style={{ filter: "grayscale(0.3)" }}
         >
           <iframe
-            title="R3S corridor map — Etmadpur, Agra"
+            title="R³S Realty Developers corridor map — Etmadpur, Agra"
             src="https://maps.google.com/maps?q=Etmadpur,+Agra,+Uttar+Pradesh,+India&hl=en&z=11&output=embed"
             width="100%"
             height="380"
