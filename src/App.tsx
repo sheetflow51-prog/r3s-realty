@@ -1,7 +1,7 @@
 import { Suspense, lazy, useEffect, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import Navbar from "./components/layout/Navbar";
-import Hero from "./components/sections/Hero";
+import Hero from "./components/sections/HeroSlides";
 import Footer from "./components/layout/Footer";
 import WhatsAppFloat from "./components/layout/WhatsAppFloat";
 import LoadingScreen from "./components/shared/LoadingScreen";
