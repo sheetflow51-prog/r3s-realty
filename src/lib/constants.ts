@@ -10,7 +10,7 @@ export const COMPANY = {
   address: "S.R. Super Market, Barhan Chauraha, Etmadpur, Agra 283202",
   shortAddress: "S.R. Super Market, Near Barhan Chauraha, Etmadpur, Agra",
   website: "https://r3s-realty.netlify.app",
-  rera: "Applied",
+  rera: "Verified",
   tagline: "Roots meet rising horizons",
   mapEmbed:
     "https://maps.google.com/maps?q=Etmadpur,+Agra,+Uttar+Pradesh,+India&hl=en&z=11&output=embed",
@@ -46,7 +46,7 @@ export const NAV_LINKS: { label: string; href: string }[] = [
 ];
 
 export const TRUST_BADGES: string[] = [
-  "RERA Applied",
+  "Clear Legal Titles",
   "10+ Years Experience",
   "500+ Happy Families",
   "Free Site Visit",
