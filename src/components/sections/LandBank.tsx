@@ -1,142 +1,134 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, useInView } from "framer-motion";
-import {
-  MapPin,
-  ArrowUpRight,
-  Building2,
-  TrendingUp,
-  TrainFront,
-  Route,
-} from "lucide-react";
+import { ArrowUpRight, MapPin } from "lucide-react";
 import SectionHeading from "../shared/SectionHeading";
 
 /* ─────────────────────────────────────────────
-   NH-19 Growth Corridor — investor-brochure map
-   Geographically anchored, R³S HQ at Barhan,
-   labeled advantage callouts, surrounding villages.
+   R³S Realty — NH-19 Growth Corridor
+   Investor-grade SVG map with correct geography:
+   Agra (0km) → Kakua–Baad (12km, slightly above hwy)
+     → Etmadpur (16km, slightly below hwy)
+     → Khandauli (18km, on hwy) → Barhan (22km, on hwy, HQ)
+     → Tundla Jct (35km, on hwy).
+   Warm parchment / amber + gold palette in both modes.
    ───────────────────────────────────────────── */
 
-interface Node {
+interface CorridorNode {
   id: string;
   name: string;
-  km: number; // km from Agra along NH-19
-  x: number; // 0–100 % across SVG (longitude-weighted)
-  y: number; // 0–100 % (latitude-weighted, inverted)
-  tag: "featured" | "hq" | "node" | "secondary";
-  oneLiner: string;
-  advantage: string; // short callout shown next to pin
+  km: number;
+  cx: number;     // viewBox coords (0..1200, 0..520)
+  cy: number;
+  r: number;
+  onHighway: boolean;
+  highwayCx?: number; // where the connector should meet the highway
+  highwayCy?: number;
+  variant: "anchor" | "featured" | "hq" | "node";
+  badge?: string;
+  title: string;
+  sub: string;
+  desc: string;
+  stats?: string;
   href: string;
+  labelAbove: boolean;
 }
 
-// Positions reflect actual relative geography:
-// Agra (anchor, west) → Kakua-Baad (south-west of Agra, near Atalpuram)
-// → Khandauli (NE of Etmadpur on NH-19) → Etmadpur (mid-corridor)
-// → Barhan (R³S HQ, on NH-19 east of Etmadpur)
-// → Tundla Junction (far east, rail)
-const NODES: Node[] = [
+const NODES: CorridorNode[] = [
   {
     id: "agra",
-    name: "Agra",
+    name: "AGRA",
     km: 0,
-    x: 8, y: 56,
-    tag: "node",
-    oneLiner: "Anchor city · NH-19 origin · Taj Mahal hub",
-    advantage: "1.5M+ population · airport · tourism economy",
+    cx: 80,  cy: 280, r: 8,
+    onHighway: true,
+    variant: "anchor",
+    title: "Agra",
+    sub: "The Gateway City",
+    desc: "Historic anchor of the corridor. All R³S belts within 12–35km drive.",
     href: "https://www.google.com/maps/search/Agra/@27.18,78.0,11z",
+    labelAbove: false,
   },
   {
     id: "kakua",
-    name: "Kakua–Baad",
+    name: "KAKUA–BAAD",
     km: 12,
-    x: 24, y: 32,
-    tag: "featured",
-    oneLiner: "Adjoining ADA's Atalpuram Township · 100–200 sq.yd · from ₹12L",
-    advantage: "₹500Cr+ ADA Atalpuram Township adjacent",
-    href: "https://www.google.com/maps/search/Kakua+Bhandai+Atalpuram+Agra/@27.1300,77.9700,12z",
-  },
-  {
-    id: "khandauli",
-    name: "Khandauli",
-    km: 18,
-    x: 44, y: 48,
-    tag: "node",
-    oneLiner: "Railway junction belt · agri + residential",
-    advantage: "Rail + road · rapid transition zone",
-    href: "https://www.google.com/maps/search/Khandauli+Agra/@27.2700,78.2200,12z",
-  },
-  {
-    id: "barhan",
-    name: "Barhan",
-    km: 22,
-    x: 60, y: 56,
-    tag: "hq",
-    oneLiner: "R³S Realty Developers · S.R. Super Market HQ",
-    advantage: "Busiest chauraha · HQ · highway commercial",
-    href: "https://www.google.com/maps/search/Barhan+Etmadpur+road/@27.2400,78.2500,12z",
+    cx: 380, cy: 185, r: 14,
+    onHighway: false,
+    highwayCx: 380, highwayCy: 210,
+    variant: "featured",
+    badge: "★ FEATURED INVESTMENT",
+    title: "Kakua–Baad Belt",
+    sub: "Adjacent to ADA Atalpuram Township",
+    desc: "UP Government's ₹500Cr+ Atalpuram township planned adjacent. Maximum appreciation expected.",
+    stats: "Early investor advantage · Gwalior Road",
+    href: "https://www.google.com/maps/search/Kakua+Bhandai+Atalpuram+Agra",
+    labelAbove: true,
   },
   {
     id: "etmadpur",
-    name: "Etmadpur",
+    name: "ETMADPUR",
     km: 16,
-    x: 52, y: 64,
-    tag: "secondary",
-    oneLiner: "Saroj Residency · Sawai Dham Ashram",
-    advantage: "Active project · bus stand · town core",
-    href: "https://www.google.com/maps/search/Sawai+Dham+Ashram+Etmadpur+Agra/@27.2308,78.2614,13z",
+    cx: 640, cy: 310, r: 10,
+    onHighway: false,
+    highwayCx: 620, highwayCy: 230,
+    variant: "hq",
+    badge: "R³S ACTIVE",
+    title: "Etmadpur — R³S HQ",
+    sub: "Saroj Residency · S.R. Super Market",
+    desc: "Our home base. Saroj Residency plots from ₹8.99L. Office at S.R. Super Market, Barhan Chauraha.",
+    stats: "100 sq.yd onwards · Selling fast",
+    href: "https://www.google.com/maps/search/Saroj+Residency+Etmadpur+Agra",
+    labelAbove: false,
+  },
+  {
+    id: "khandauli",
+    name: "KHANDAULI",
+    km: 18,
+    cx: 720, cy: 240, r: 10,
+    onHighway: true,
+    variant: "node",
+    title: "Khandauli Belt",
+    sub: "NH-19 Junction · Rapid Growth Zone",
+    desc: "Maximum frontage on NH-19. Agricultural plots with commercial potential. Railway connectivity nearby.",
+    href: "https://www.google.com/maps/search/Khandauli+Agra",
+    labelAbove: true,
+  },
+  {
+    id: "barhan",
+    name: "BARHAN",
+    km: 22,
+    cx: 840, cy: 245, r: 12,
+    onHighway: true,
+    variant: "hq",
+    badge: "★ DIRECT NH-19 FRONTAGE",
+    title: "Barhan Chauraha",
+    sub: "Busiest Junction · Highway Commercial",
+    desc: "R³S office at S.R. Super Market here. Highest daily footfall on the corridor. Ideal for commercial investment.",
+    href: "https://www.google.com/maps/search/Barhan+Chauraha+Etmadpur+Agra",
+    labelAbove: true,
   },
   {
     id: "tundla",
-    name: "Tundla Junction",
+    name: "TUNDLA JUNCTION",
     km: 35,
-    x: 86, y: 46,
-    tag: "node",
-    oneLiner: "Major rail junction · NH-19 corridor terminus",
-    advantage: "Delhi–Howrah main line · 7 platforms · industrial",
-    href: "https://www.google.com/maps/search/Tundla+Etmadpur+Agra/@27.2200,78.2700,11z",
+    cx: 1150, cy: 240, r: 10,
+    onHighway: true,
+    variant: "node",
+    title: "Tundla Junction Belt",
+    sub: "Railway + Highway Confluence",
+    desc: "Major railway junction on Delhi–Howrah main line. NH-19 highway access. Industrial and warehousing growth.",
+    href: "https://www.google.com/maps/search/Tundla+Junction+Firozabad",
+    labelAbove: true,
   },
 ];
 
-// Surrounding village dots — purely decorative aerial-view feel
-// (positions inside the corridor envelope, no labels to keep clean)
-const VILLAGE_DOTS: { x: number; y: number; r: number; o: number }[] = [
-  { x: 14, y: 44, r: 0.5, o: 0.45 },
-  { x: 18, y: 68, r: 0.4, o: 0.35 },
-  { x: 29, y: 52, r: 0.55, o: 0.5 },
-  { x: 33, y: 22, r: 0.4, o: 0.4 },
-  { x: 37, y: 70, r: 0.45, o: 0.4 },
-  { x: 48, y: 28, r: 0.4, o: 0.4 },
-  { x: 55, y: 74, r: 0.5, o: 0.45 },
-  { x: 64, y: 72, r: 0.4, o: 0.35 },
-  { x: 68, y: 36, r: 0.45, o: 0.4 },
-  { x: 72, y: 60, r: 0.4, o: 0.35 },
-  { x: 78, y: 70, r: 0.45, o: 0.4 },
-  { x: 80, y: 30, r: 0.45, o: 0.4 },
-  { x: 90, y: 60, r: 0.4, o: 0.35 },
-  { x: 92, y: 32, r: 0.4, o: 0.35 },
-];
+const NH19_PATH =
+  "M 80,280 C 200,260 280,230 380,210 C 450,195 500,200 560,220 L 720,240 L 840,245 C 950,250 1050,245 1150,240";
 
-function nodeColor(tag: Node["tag"]) {
-  switch (tag) {
-    case "featured":
-      return { ring: "#e0c068", dot: "#e0c068", text: "#0a0d0a" };
-    case "hq":
-      return { ring: "#2d8a42", dot: "#2d8a42", text: "#f7efdc" };
-    case "secondary":
-      return { ring: "rgba(224,192,104,0.65)", dot: "rgba(224,192,104,0.85)", text: "#0a0d0a" };
-    case "node":
-    default:
-      return { ring: "rgba(247,239,220,0.55)", dot: "rgba(247,239,220,0.85)", text: "#0a0d0a" };
-  }
-}
-
-/* NH-19 spine — S-curve approximating the real Agra→Tundla highway shape */
-const NH19_PATH = "M 4 60 C 18 30, 32 40, 45 50 C 58 60, 72 50, 86 48 L 96 46";
-
-/* ─── Animated Counter ─── */
+/* ── Animated counter for the stat row ── */
 function Counter({
   to,
   suffix = "",
-  duration = 1800,
+  duration = 1500,
 }: {
   to: number;
   suffix?: string;
@@ -169,35 +161,44 @@ function Counter({
 }
 
 function CorridorStats() {
+  const cells = [
+    { value: 12, suffix: " KM", label: "From Agra Centre" },
+    { value: 28, suffix: "%",   label: "Annual Appreciation" },
+    { value: 4,  suffix: "",    label: "Strategic Belts" },
+  ];
   return (
-    <div
-      className="grid grid-cols-3 gap-3 md:gap-6 mb-8"
-      aria-label="NH-19 corridor key stats"
-    >
-      {[
-        { value: 12, suffix: " km", label: "From Agra centre to Kakua–Baad" },
-        { value: 28, suffix: "%", label: "Avg. annual appreciation, 5-yr" },
-        { value: 4, suffix: "", label: "Strategic land belts under R³S" },
-      ].map((s) => (
+    <div className="grid grid-cols-3 gap-3 md:gap-6 mb-10">
+      {cells.map((c) => (
         <div
-          key={s.label}
-          className="px-4 py-5 md:px-6 md:py-7 border border-border bg-bg-card/40 text-center md:text-left"
+          key={c.label}
+          className="px-4 py-5 md:px-6 md:py-7 text-center md:text-left"
+          style={{
+            border: "1px solid rgba(200,134,10,0.18)",
+            background: "rgba(200,134,10,0.04)",
+            borderRadius: 2,
+          }}
         >
           <div
-            className="font-display text-3xl md:text-5xl leading-none"
             style={{
-              color: "#e0c068",
               fontFamily: "'Cormorant Garamond', Georgia, serif",
+              color: "#C8860A",
               fontWeight: 500,
+              fontSize: "clamp(32px, 5vw, 48px)",
+              lineHeight: 1,
             }}
           >
-            <Counter to={s.value} suffix={s.suffix} />
+            <Counter to={c.value} suffix={c.suffix} />
           </div>
           <div
-            className="mt-2 text-[10px] md:text-[11px] uppercase font-semibold text-text-muted"
-            style={{ letterSpacing: "0.24em", lineHeight: 1.4 }}
+            className="mt-3 uppercase font-semibold"
+            style={{
+              fontFamily: "'DM Sans', sans-serif",
+              fontSize: 11,
+              letterSpacing: "0.15em",
+              color: "var(--text-muted, #6b6055)",
+            }}
           >
-            {s.label}
+            {c.label}
           </div>
         </div>
       ))}
@@ -205,440 +206,492 @@ function CorridorStats() {
   );
 }
 
+/* ── Hand-coded SVG icons for the investment row ── */
+function GovIcon() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <polygon points="14,3 22,9 6,9" />
+      <line x1="6" y1="9" x2="6" y2="22" />
+      <line x1="22" y1="9" x2="22" y2="22" />
+      <line x1="14" y1="9" x2="14" y2="22" />
+      <line x1="3" y1="22" x2="25" y2="22" />
+      <line x1="14" y1="3" x2="14" y2="0.5" />
+      <path d="M14 1 L18 2 L14 3" />
+    </svg>
+  );
+}
+function HighwayIcon() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <line x1="4" y1="9" x2="24" y2="9" />
+      <line x1="4" y1="19" x2="24" y2="19" />
+      <line x1="9" y1="14" x2="11" y2="14" />
+      <line x1="13" y1="14" x2="15" y2="14" />
+      <line x1="17" y1="14" x2="19" y2="14" />
+      <line x1="2" y1="11" x2="4" y2="9" />
+      <line x1="26" y1="11" x2="24" y2="9" />
+    </svg>
+  );
+}
+function ChartIcon() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <polyline points="4,24 4,4" />
+      <polyline points="4,24 24,24" />
+      <polyline points="6,20 11,15 16,17 22,8" />
+      <circle cx="22" cy="8" r="1.5" fill="currentColor" />
+      <polyline points="19,5 22,8 19,11" />
+    </svg>
+  );
+}
+function RailIcon() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <line x1="8" y1="3" x2="8" y2="25" />
+      <line x1="20" y1="3" x2="20" y2="25" />
+      <line x1="6" y1="8" x2="22" y2="8" />
+      <line x1="6" y1="15" x2="22" y2="15" />
+      <line x1="6" y1="22" x2="22" y2="22" />
+      <polygon points="14,11 17,14 14,17 11,14" />
+    </svg>
+  );
+}
+
+function InvestmentIcons() {
+  const items = [
+    { Icon: GovIcon,     label: "Atalpuram Township", sub: "₹500Cr+ Govt Project" },
+    { Icon: HighwayIcon, label: "NH-19 Expansion",    sub: "6-lane in progress" },
+    { Icon: ChartIcon,   label: "28% Annual Growth",  sub: "5-year verified data" },
+    { Icon: RailIcon,    label: "Tundla Junction",    sub: "Delhi–Howrah main line" },
+  ];
+  return (
+    <div className="mt-10 grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+      {items.map(({ Icon, label, sub }) => (
+        <div
+          key={label}
+          className="flex flex-col items-center gap-2 text-center transition-colors"
+          style={{
+            border: "1px solid rgba(200,134,10,0.12)",
+            background: "transparent",
+            padding: 20,
+            borderRadius: 2,
+          }}
+          onMouseEnter={(e) =>
+            ((e.currentTarget as HTMLDivElement).style.background = "rgba(200,134,10,0.05)")
+          }
+          onMouseLeave={(e) =>
+            ((e.currentTarget as HTMLDivElement).style.background = "transparent")
+          }
+        >
+          <span style={{ color: "var(--corridor-icon, #C8860A)" }}>
+            <Icon />
+          </span>
+          <div
+            style={{
+              fontFamily: "'DM Sans', sans-serif",
+              fontSize: 12,
+              fontWeight: 500,
+              color: "var(--text)",
+            }}
+          >
+            {label}
+          </div>
+          <div
+            style={{
+              fontFamily: "'DM Sans', sans-serif",
+              fontSize: 10,
+              color: "var(--text-muted)",
+            }}
+          >
+            {sub}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ── Corridor SVG map ── */
 function CorridorMap() {
   const [hovered, setHovered] = useState<string | null>(null);
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   return (
     <div
-      className="relative w-full overflow-hidden corridor-shell"
+      ref={containerRef}
+      className="relative w-full corridor-shell"
       style={{
-        height: 560,
-        borderRadius: 2,
-        border: "1px solid rgba(224,192,104,0.18)",
+        borderRadius: 4,
+        overflow: "hidden",
+        border: "1px solid rgba(212,175,55,0.15)",
       }}
     >
-      {/* Background tint */}
-      <div className="absolute inset-0 corridor-bg" aria-hidden />
+      {/* Background base + vignette */}
+      <div className="absolute inset-0 corridor-base" aria-hidden />
+      <div className="absolute inset-0 corridor-vignette" aria-hidden />
 
-      {/* SVG: grid, glow, NH-19 spine, villages */}
-      <svg
-        className="absolute inset-0 w-full h-full pointer-events-none"
-        viewBox="0 0 100 100"
-        preserveAspectRatio="none"
-        aria-hidden
-      >
-        <defs>
-          <pattern id="grid-fine" width="2" height="2" patternUnits="userSpaceOnUse">
-            <path d="M 2 0 L 0 0 0 2" fill="none" stroke="rgba(247,239,220,0.05)" strokeWidth="0.1" />
-          </pattern>
-          <pattern id="grid-bold" width="10" height="10" patternUnits="userSpaceOnUse">
-            <path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(247,239,220,0.09)" strokeWidth="0.15" />
-          </pattern>
-          <radialGradient id="corridor-glow" cx="60%" cy="56%" r="42%">
-            <stop offset="0%" stopColor="rgba(45,138,66,0.18)" />
-            <stop offset="100%" stopColor="rgba(45,138,66,0)" />
-          </radialGradient>
-          <linearGradient id="nh19" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#a07820" />
-            <stop offset="50%" stopColor="#e0c068" />
-            <stop offset="100%" stopColor="#a07820" />
-          </linearGradient>
-        </defs>
-
-        <rect width="100" height="100" fill="url(#grid-fine)" />
-        <rect width="100" height="100" fill="url(#grid-bold)" />
-        <rect width="100" height="100" fill="url(#corridor-glow)" />
-
-        {/* Yamuna Expressway hint — secondary parallel route */}
-        <path
-          d="M 0 80 C 30 75, 60 70, 100 65"
-          stroke="rgba(247,239,220,0.18)"
-          strokeWidth="0.4"
-          strokeDasharray="1.2 1"
-          fill="none"
-        />
-        <text
-          x="55" y="78"
-          fontSize="1.6"
-          fill="rgba(247,239,220,0.32)"
-          fontFamily="'DM Sans', sans-serif"
-          letterSpacing="0.16em"
+      <div className="relative" style={{ width: "100%" }}>
+        <svg
+          viewBox="0 0 1200 520"
+          preserveAspectRatio="xMidYMid meet"
+          className="block w-full"
+          style={{ height: "auto", maxHeight: 520 }}
+          aria-label="NH-19 Growth Corridor map"
         >
-          YAMUNA EXPRESSWAY
-        </text>
+          <defs>
+            <pattern id="map-grid" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+              <path d="M40 0 L0 0 0 40" fill="none" className="map-grid-line" strokeWidth="0.5" />
+            </pattern>
+            <radialGradient id="map-vign" cx="50%" cy="50%" r="65%">
+              <stop offset="60%" stopColor="rgba(0,0,0,0)" />
+              <stop offset="100%" stopColor="rgba(0,0,0,0.25)" />
+            </radialGradient>
+          </defs>
 
-        {/* Tundla rail line hint — comes in from the east */}
-        <path
-          d="M 100 38 C 88 40, 80 42, 70 44"
-          stroke="rgba(247,239,220,0.22)"
-          strokeWidth="0.3"
-          strokeDasharray="0.5 0.6"
-          fill="none"
-        />
-        <text
-          x="78" y="36"
-          fontSize="1.4"
-          fill="rgba(247,239,220,0.32)"
-          fontFamily="'DM Sans', sans-serif"
-          letterSpacing="0.16em"
-        >
-          DELHI – HOWRAH RAIL
-        </text>
+          {/* Grid layer */}
+          <rect width="1200" height="520" fill="url(#map-grid)" />
 
-        {/* NH-19 main spine: glow → road → dashed centerline */}
-        <path
-          d={NH19_PATH}
-          stroke="rgba(224,192,104,0.25)"
-          strokeWidth="3"
-          strokeLinecap="round"
-          fill="none"
-        />
-        <path
-          d={NH19_PATH}
-          stroke="url(#nh19)"
-          strokeWidth="1.2"
-          strokeLinecap="round"
-          fill="none"
-        />
-        <path
-          d={NH19_PATH}
-          stroke="rgba(255,255,255,0.7)"
-          strokeWidth="0.18"
-          strokeDasharray="1 1.4"
-          fill="none"
-          className="corridor-dashes"
-        />
-        <text
-          x="40" y="44"
-          fontSize="1.6"
-          fill="#e0c068"
-          fontFamily="'DM Sans', sans-serif"
-          letterSpacing="0.2em"
-          fontWeight={600}
-        >
-          NH-19
-        </text>
-
-        {/* Village dots — aerial feel */}
-        {VILLAGE_DOTS.map((d, i) => (
-          <circle
-            key={`v-${i}`}
-            cx={d.x}
-            cy={d.y}
-            r={d.r}
-            fill="rgba(247,239,220,0.4)"
-            opacity={d.o}
+          {/* Secondary routes: Rail (top) + Yamuna Expressway (bottom) */}
+          <line
+            x1="80" y1="150" x2="1150" y2="150"
+            stroke="#6B5040" strokeWidth="1"
+            strokeDasharray="12,4,3,4" opacity="0.35"
           />
-        ))}
+          <text x="100" y="142" fontFamily="'DM Sans', sans-serif" fontSize="9"
+                fill="var(--corridor-muted)" letterSpacing="0.2em" opacity="0.8">
+            DELHI – HOWRAH RAIL
+          </text>
 
-        {/* Connector lines from non-HQ nodes to HQ */}
-        {NODES.filter((n) => n.tag !== "hq").map((n) => {
-          const hq = NODES.find((x) => x.tag === "hq")!;
-          return (
+          <line
+            x1="80" y1="380" x2="1150" y2="380"
+            stroke="#8B6055" strokeWidth="1"
+            strokeDasharray="8,6" opacity="0.4"
+          />
+          <text x="100" y="395" fontFamily="'DM Sans', sans-serif" fontSize="9"
+                fill="var(--corridor-muted)" letterSpacing="0.2em" opacity="0.8">
+            YAMUNA EXPRESSWAY
+          </text>
+
+          {/* NH-19 highway: border → fill → centre dashes */}
+          <path d={NH19_PATH} stroke="#8B6914" strokeWidth="14" opacity="0.4" fill="none" strokeLinecap="round" />
+          <path d={NH19_PATH} className="corridor-highway" strokeWidth="10" fill="none" strokeLinecap="round" />
+          <path
+            d={NH19_PATH}
+            stroke="rgba(255,255,255,0.5)"
+            strokeWidth="2"
+            strokeDasharray="20,15"
+            fill="none"
+            className="corridor-road-dashes"
+          />
+
+          {/* Connector lines for off-highway nodes */}
+          {NODES.filter((n) => !n.onHighway).map((n) => (
             <line
-              key={`l-${n.id}`}
-              x1={n.x}
-              y1={n.y}
-              x2={hq.x}
-              y2={hq.y}
-              stroke="rgba(224,192,104,0.18)"
-              strokeWidth="0.18"
-              strokeDasharray="0.6 0.8"
+              key={`conn-${n.id}`}
+              x1={n.highwayCx}
+              y1={n.highwayCy}
+              x2={n.cx}
+              y2={n.cy}
+              stroke="#C8860A"
+              strokeWidth="1.5"
+              strokeDasharray="4,3"
+              opacity="0.8"
             />
-          );
-        })}
+          ))}
 
-        {/* Compass rose */}
-        <g transform="translate(92,12)" opacity="0.55">
-          <circle r="3.2" fill="none" stroke="rgba(224,192,104,0.5)" strokeWidth="0.18" />
-          <path d="M 0 -2.6 L 0.6 0 L 0 2.6 L -0.6 0 Z" fill="#e0c068" />
-          <text
-            x="0" y="-3.6"
-            textAnchor="middle"
-            fontSize="1.8"
-            fill="#e0c068"
-            fontFamily="'DM Sans', sans-serif"
-            fontWeight="600"
-          >
-            N
-          </text>
-        </g>
+          {/* Always-on advantage badges (pills) */}
+          {/* Kakua–Baad badge */}
+          <g transform="translate(290,150)">
+            <rect width="220" height="22" rx="11"
+                  fill="rgba(200,134,10,0.15)" stroke="#C8860A" strokeWidth="0.8" />
+            <text x="110" y="14" textAnchor="middle"
+                  fontFamily="'DM Sans', sans-serif" fontSize="8"
+                  fill="#C8860A" letterSpacing="0.15em" fontWeight="600">
+              ★ ADA ATALPURAM ADJACENT
+            </text>
+          </g>
+          {/* Barhan badge */}
+          <g transform="translate(740,210)">
+            <rect width="200" height="22" rx="11"
+                  fill="rgba(200,134,10,0.15)" stroke="#C8860A" strokeWidth="0.8" />
+            <text x="100" y="14" textAnchor="middle"
+                  fontFamily="'DM Sans', sans-serif" fontSize="8"
+                  fill="#C8860A" letterSpacing="0.15em" fontWeight="600">
+              ★ DIRECT NH-19 · HQ
+            </text>
+          </g>
 
-        {/* Scale bar */}
-        <g transform="translate(4,92)" opacity="0.7">
-          <rect x="0" y="0" width="20" height="0.9" fill="rgba(247,239,220,0.6)" />
-          <rect x="0" y="0" width="10" height="0.9" fill="#e0c068" />
-          <text x="0" y="-1" fontSize="1.8" fill="rgba(247,239,220,0.7)" fontFamily="'DM Sans', sans-serif" letterSpacing="0.05em">
-            0
-          </text>
-          <text x="20" y="-1" fontSize="1.8" fill="rgba(247,239,220,0.7)" fontFamily="'DM Sans', sans-serif" letterSpacing="0.05em" textAnchor="end">
-            40 km
-          </text>
-        </g>
-      </svg>
-
-      {/* Title strip */}
-      <div className="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none z-10">
-        <div className="flex items-baseline gap-3">
-          <span
-            className="font-display"
-            style={{ fontSize: 18, color: "#e0c068", fontWeight: 600, letterSpacing: "0.01em" }}
-          >
+          {/* Header */}
+          <text x="40" y="50"
+                fontFamily="'Cormorant Garamond', Georgia, serif"
+                fontSize="20" fontWeight="600"
+                fill="var(--corridor-title)">
             NH-19 Growth Corridor
-          </span>
-          <span
-            className="text-[10px] uppercase font-semibold hidden md:inline"
-            style={{ color: "rgba(247,239,220,0.5)", letterSpacing: "0.32em" }}
-          >
-            Agra → Tundla → Kanpur
-          </span>
-        </div>
-        <span
-          className="text-[10px] uppercase font-semibold hidden sm:inline-flex items-center gap-2"
-          style={{ color: "rgba(247,239,220,0.45)", letterSpacing: "0.32em" }}
+          </text>
+          <text x="40" y="68"
+                fontFamily="'DM Sans', sans-serif"
+                fontSize="9" letterSpacing="0.2em"
+                fill="var(--corridor-muted)">
+            AGRA → TUNDLA → KANPUR
+          </text>
+
+          {/* Legend (top-right) */}
+          <g transform="translate(950,40)">
+            <circle cx="6" cy="6" r="5" fill="#C8860A" />
+            <text x="18" y="10"
+                  fontFamily="'DM Sans', sans-serif" fontSize="9"
+                  letterSpacing="0.12em" fill="var(--corridor-muted)">
+              R³S HQ
+            </text>
+            <circle cx="80" cy="6" r="5" fill="#C8860A" />
+            <text x="92" y="10"
+                  fontFamily="'DM Sans', sans-serif" fontSize="9"
+                  letterSpacing="0.12em" fill="var(--corridor-muted)">
+              FEATURED
+            </text>
+          </g>
+
+          {/* Compass — top-right, below legend */}
+          <g transform="translate(1130,70)" opacity="0.85">
+            <ellipse cx="0" cy="0" rx="14" ry="18" fill="none" stroke="#C8860A" strokeWidth="0.8" />
+            <polygon points="0,-13 4,0 0,13 -4,0" fill="#C8860A" />
+            <text x="0" y="-20" textAnchor="middle"
+                  fontFamily="'DM Sans', sans-serif" fontSize="8"
+                  fill="#C8860A" fontWeight="600">N</text>
+          </g>
+
+          {/* Scale bar (bottom-left) */}
+          <g transform="translate(40,470)" opacity="0.85">
+            <line x1="0" y1="0" x2="180" y2="0" stroke="#C8860A" strokeWidth="2" strokeLinecap="round" />
+            <line x1="0" y1="-3" x2="0" y2="3" stroke="#C8860A" strokeWidth="2" />
+            <line x1="90" y1="-3" x2="90" y2="3" stroke="#C8860A" strokeWidth="2" />
+            <line x1="180" y1="-3" x2="180" y2="3" stroke="#C8860A" strokeWidth="2" />
+            <text x="0" y="-8" fontFamily="'DM Sans', sans-serif" fontSize="9"
+                  fill="var(--corridor-muted)">0</text>
+            <text x="90" y="-8" textAnchor="middle" fontFamily="'DM Sans', sans-serif" fontSize="9"
+                  fill="var(--corridor-muted)">20</text>
+            <text x="180" y="-8" textAnchor="end" fontFamily="'DM Sans', sans-serif" fontSize="9"
+                  fill="var(--corridor-muted)">40 km</text>
+          </g>
+
+          {/* Nodes */}
+          {NODES.map((n) => {
+            const isActive = n.variant === "featured" || n.variant === "hq";
+            const color = n.variant === "anchor"
+              ? "#FFFFFF"
+              : n.variant === "featured"
+              ? "#C8860A"
+              : n.variant === "hq"
+              ? "var(--corridor-hq-color, #C8860A)"
+              : "var(--corridor-node-color, #8B4513)";
+            return (
+              <g
+                key={n.id}
+                style={{ cursor: "pointer" }}
+                onMouseEnter={(e) => {
+                  const rect = containerRef.current?.getBoundingClientRect();
+                  if (rect) {
+                    setPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+                  }
+                  setHovered(n.id);
+                }}
+                onMouseMove={(e) => {
+                  const rect = containerRef.current?.getBoundingClientRect();
+                  if (rect) {
+                    setPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+                  }
+                }}
+                onMouseLeave={() => setHovered(null)}
+                onClick={() => window.open(n.href, "_blank", "noopener")}
+              >
+                {/* Outer glow ring for featured/hq — pulse via CSS */}
+                {isActive && (
+                  <circle
+                    cx={n.cx}
+                    cy={n.cy}
+                    r={n.r + 8}
+                    fill="none"
+                    stroke={color === "var(--corridor-hq-color, #C8860A)" ? "#C8860A" : color}
+                    strokeWidth="1.5"
+                    opacity="0.3"
+                    className="corridor-node-pulse"
+                    style={{ transformOrigin: `${n.cx}px ${n.cy}px` }}
+                  />
+                )}
+                {/* Node body */}
+                {n.variant === "anchor" ? (
+                  <circle cx={n.cx} cy={n.cy} r={n.r} fill="none" stroke="#FFFFFF" strokeWidth="2" />
+                ) : (
+                  <circle cx={n.cx} cy={n.cy} r={n.r} fill={color} stroke="#2D1A05" strokeWidth="1.5" />
+                )}
+                {/* Label */}
+                <text
+                  x={n.cx}
+                  y={n.labelAbove ? n.cy - n.r - 12 : n.cy + n.r + 18}
+                  textAnchor="middle"
+                  fontFamily="'DM Sans', sans-serif"
+                  fontSize="10"
+                  fill="var(--corridor-label)"
+                  letterSpacing="0.12em"
+                  fontWeight="600"
+                >
+                  {n.name} {n.km} KM
+                </text>
+                {/* HQ extra tag for Barhan */}
+                {n.id === "barhan" && (
+                  <text
+                    x={n.cx}
+                    y={n.cy - n.r - 26}
+                    textAnchor="middle"
+                    fontFamily="'DM Sans', sans-serif"
+                    fontSize="9"
+                    fill="#C8860A"
+                    letterSpacing="0.18em"
+                    fontWeight="700"
+                  >
+                    ★ R³S HQ
+                  </text>
+                )}
+              </g>
+            );
+          })}
+        </svg>
+
+        {/* Footer bar */}
+        <div
+          className="corridor-footer flex items-center justify-between px-4 py-2"
+          style={{
+            borderTop: "1px solid rgba(200,134,10,0.1)",
+            background: "rgba(200,134,10,0.05)",
+            fontFamily: "'DM Sans', sans-serif",
+            fontSize: 8,
+            letterSpacing: "0.18em",
+            opacity: 0.7,
+            color: "var(--corridor-muted)",
+          }}
         >
-          <span style={{ width: 8, height: 8, background: "#2d8a42", borderRadius: "50%" }} />
-          R³S HQ
-          <span className="mx-2" />
-          <span style={{ width: 8, height: 8, background: "#e0c068", borderRadius: "50%" }} />
-          Featured
-        </span>
-      </div>
+          <span className="uppercase">SOURCE: R³S REALTY · LAND-BANK SURVEY 2026</span>
+          <span className="uppercase hidden md:inline">HOVER A NODE FOR DETAILS</span>
+        </div>
 
-      {/* Node markers + advantage callouts */}
-      {NODES.map((n) => {
-        const c = nodeColor(n.tag);
-        const isHover = hovered === n.id;
-        const showAdvantage = n.tag === "hq" || n.tag === "featured";
-        return (
-          <a
-            key={n.id}
-            href={n.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            title={`${n.name} — open Google Maps`}
-            onMouseEnter={() => setHovered(n.id)}
-            onMouseLeave={() => setHovered(null)}
-            onFocus={() => setHovered(n.id)}
-            onBlur={() => setHovered(null)}
-            className="absolute -translate-x-1/2 -translate-y-1/2 group focus:outline-none"
-            style={{ left: `${n.x}%`, top: `${n.y}%`, zIndex: isHover ? 5 : 2 }}
-          >
-            {/* Marker */}
-            <span
-              className="block relative"
+        {/* Tooltip — positioned at cursor inside container */}
+        {hovered && pos && (() => {
+          const n = NODES.find((x) => x.id === hovered);
+          if (!n) return null;
+          return (
+            <div
+              className="corridor-tooltip"
               style={{
-                width: n.tag === "hq" ? 18 : n.tag === "featured" ? 16 : 12,
-                height: n.tag === "hq" ? 18 : n.tag === "featured" ? 16 : 12,
+                position: "absolute",
+                left: Math.min(pos.x + 14, (containerRef.current?.clientWidth || 800) - 280),
+                top: Math.max(pos.y - 110, 8),
+                width: 260,
+                background: "var(--corridor-tt-bg)",
+                border: "1px solid #C8860A",
+                borderRadius: 3,
+                padding: "12px 16px",
+                boxShadow: "0 4px 20px rgba(200,134,10,0.25)",
+                color: "var(--corridor-tt-text)",
+                pointerEvents: "none",
+                zIndex: 30,
+                fontFamily: "'DM Sans', sans-serif",
               }}
             >
-              {(n.tag === "hq" || n.tag === "featured") && (
-                <span
-                  className="absolute inset-0 rounded-full"
-                  style={{
-                    background: c.ring,
-                    opacity: 0.5,
-                    animation: "corridorPulse 2.4s ease-out infinite",
-                  }}
-                />
+              {n.badge && (
+                <div style={{ color: "#C8860A", fontSize: 9, letterSpacing: "0.22em", fontWeight: 700, marginBottom: 4 }}>
+                  {n.badge}
+                </div>
               )}
-              <span
-                className="absolute inset-0 rounded-full"
-                style={{
-                  background: c.dot,
-                  border: `1.5px solid #0a0d0a`,
-                  boxShadow: `0 0 0 1.5px ${c.ring}, 0 4px 10px rgba(0,0,0,0.5)`,
-                }}
-              />
-            </span>
-
-            {/* Label chip below pin */}
-            <span
-              className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap text-[10px] font-semibold uppercase"
-              style={{
-                top: "calc(100% + 8px)",
-                color: "rgba(247,239,220,0.9)",
-                letterSpacing: "0.18em",
-                textShadow: "0 1px 4px rgba(0,0,0,0.8)",
-              }}
-            >
-              {n.name}
-              <span style={{ marginLeft: 6, color: "#e0c068", letterSpacing: "0.1em" }}>
-                {n.km} km
-              </span>
-            </span>
-
-            {/* Always-on advantage badge for HQ + Featured */}
-            {showAdvantage && !isHover && (
-              <span
-                className="absolute hidden md:block whitespace-nowrap text-[9px] font-semibold uppercase pointer-events-none"
-                style={{
-                  left: "calc(100% + 10px)",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  color: n.tag === "hq" ? "#7fd99a" : "#e0c068",
-                  letterSpacing: "0.22em",
-                  textShadow: "0 1px 4px rgba(0,0,0,0.8)",
-                  padding: "3px 7px",
-                  border: `1px solid ${n.tag === "hq" ? "rgba(45,138,66,0.5)" : "rgba(224,192,104,0.5)"}`,
-                  background: "rgba(10,13,10,0.7)",
-                  borderRadius: 2,
-                }}
-              >
-                ★ {n.advantage}
-              </span>
-            )}
-
-            {/* Hover detail card */}
-            {isHover && (
-              <motion.span
-                initial={{ opacity: 0, y: -6, scale: 0.96 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ duration: 0.18 }}
-                className="absolute"
-                style={{
-                  left: "50%",
-                  bottom: "calc(100% + 14px)",
-                  transform: "translateX(-50%)",
-                  width: 250,
-                  background: "rgba(10,13,10,0.97)",
-                  border: "1px solid rgba(224,192,104,0.4)",
-                  padding: "12px 14px",
-                  color: "#f7efdc",
-                  boxShadow: "0 16px 32px rgba(0,0,0,0.55)",
-                  borderRadius: 2,
-                  pointerEvents: "none",
-                }}
-              >
-                <span
-                  className="block text-[9px] uppercase font-bold mb-1"
-                  style={{ color: "#e0c068", letterSpacing: "0.32em" }}
-                >
-                  {n.tag === "hq" ? "★ R³S HQ" : n.tag === "featured" ? "★ Featured Belt" : "Growth Node"}
-                </span>
-                <span className="font-display block leading-tight" style={{ fontSize: 17, fontWeight: 500 }}>
-                  {n.name}
-                </span>
-                <span
-                  className="block text-[11px] font-light mt-1.5 leading-snug"
-                  style={{ color: "rgba(247,239,220,0.75)" }}
-                >
-                  {n.oneLiner}
-                </span>
-                <span
-                  className="mt-2 block text-[10px] font-semibold uppercase"
-                  style={{ color: "#7fd99a", letterSpacing: "0.2em" }}
-                >
-                  ★ {n.advantage}
-                </span>
-                <span
-                  className="mt-2 inline-flex items-center gap-1 text-[9px] uppercase font-semibold"
-                  style={{ color: "#e0c068", letterSpacing: "0.28em" }}
-                >
-                  View on map <ArrowUpRight className="w-3 h-3" />
-                </span>
-              </motion.span>
-            )}
-          </a>
-        );
-      })}
-
-      {/* Bottom meta strip */}
-      <div
-        className="absolute bottom-0 left-0 right-0 px-5 py-3 flex flex-wrap items-center justify-between gap-2"
-        style={{ background: "linear-gradient(to top, rgba(8,12,8,0.85), transparent)" }}
-      >
-        <span className="text-[10px] uppercase font-semibold" style={{ color: "rgba(247,239,220,0.55)", letterSpacing: "0.32em" }}>
-          Source: R³S Realty Developers · land-bank survey 2026
-        </span>
-        <span className="text-[10px] uppercase font-semibold hidden md:inline" style={{ color: "rgba(247,239,220,0.4)", letterSpacing: "0.32em" }}>
-          Hover a node for details
-        </span>
+              <div style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: 18, fontWeight: 500, lineHeight: 1.1 }}>
+                {n.title}
+              </div>
+              <div style={{ fontSize: 11, marginTop: 4, color: "var(--corridor-tt-sub)" }}>
+                {n.sub}
+              </div>
+              <div style={{ fontSize: 11, marginTop: 8, lineHeight: 1.45 }}>
+                {n.desc}
+              </div>
+              {n.stats && (
+                <div style={{ fontSize: 10, marginTop: 8, color: "#C8860A", letterSpacing: "0.14em", fontWeight: 600 }}>
+                  {n.stats}
+                </div>
+              )}
+            </div>
+          );
+        })()}
       </div>
 
       <style>{`
-        .corridor-shell { --corridor-bg: #0e1812; }
-        html.light .corridor-shell { --corridor-bg: #1a2218; }
-        .corridor-bg {
-          background:
-            radial-gradient(ellipse at 35% 30%, rgba(224,192,104,0.07), transparent 55%),
-            radial-gradient(ellipse at 70% 75%, rgba(45,138,66,0.08), transparent 55%),
-            var(--corridor-bg);
+        .corridor-shell { height: 520px; }
+        @media (max-width: 768px) { .corridor-shell { height: 380px; } }
+
+        .corridor-base { background: #F5F0E8; }
+        html.dark .corridor-base { background: #0A140A; }
+
+        .corridor-vignette {
+          background: radial-gradient(circle at center, rgba(245,240,232,0) 60%, rgba(200,180,150,0.3) 100%);
+          pointer-events: none;
         }
-        @keyframes corridorPulse {
-          0% { transform: scale(1); opacity: 0.55; }
-          100% { transform: scale(2.6); opacity: 0; }
+        html.dark .corridor-vignette {
+          background: radial-gradient(circle at center, rgba(0,0,0,0) 60%, rgba(0,0,0,0.25) 100%);
         }
-        @keyframes corridorDash { to { stroke-dashoffset: -20; } }
-        .corridor-dashes { animation: corridorDash 4s linear infinite; }
+
+        .map-grid-line { stroke: rgba(139,90,43,0.08); }
+        html.dark .map-grid-line { stroke: rgba(212,175,55,0.06); }
+
+        .corridor-highway { stroke: #C8860A; }
+        html.dark .corridor-highway { stroke: #D4AF37; }
+
+        :root {
+          --corridor-title: #2D1A05;
+          --corridor-label: #2D1A05;
+          --corridor-muted: #6B6055;
+          --corridor-icon: #C8860A;
+          --corridor-tt-bg: rgba(245,240,232,0.97);
+          --corridor-tt-text: #2D1A05;
+          --corridor-tt-sub: #6B6055;
+          --corridor-hq-color: #C8860A;
+          --corridor-node-color: #8B4513;
+        }
+        html.dark {
+          --corridor-title: #D4AF37;
+          --corridor-label: #E8D5A0;
+          --corridor-muted: #a89977;
+          --corridor-icon: #D4AF37;
+          --corridor-tt-bg: rgba(15,25,15,0.97);
+          --corridor-tt-text: #E8D5A0;
+          --corridor-tt-sub: #a89977;
+          --corridor-hq-color: #D4AF37;
+          --corridor-node-color: #D4AF37;
+        }
+
+        @keyframes roadFlow {
+          to { stroke-dashoffset: -140px; }
+        }
+        .corridor-road-dashes {
+          animation: roadFlow 3s linear infinite;
+        }
+
+        @keyframes corridorNodePulse {
+          0%   { transform: scale(1);    opacity: 0.5; }
+          50%  { transform: scale(1.15); opacity: 0.2; }
+          100% { transform: scale(1);    opacity: 0.5; }
+        }
+        .corridor-node-pulse {
+          animation: corridorNodePulse 2.5s ease-in-out infinite;
+        }
+
         @media (prefers-reduced-motion: reduce) {
-          .corridor-dashes { animation: none; }
+          .corridor-road-dashes, .corridor-node-pulse { animation: none; }
         }
       `}</style>
     </div>
   );
 }
 
-/* ─── Investment psychology icon row ─── */
-function InvestmentPsychology() {
-  const items = [
-    {
-      icon: Building2,
-      title: "Government Investment",
-      text: "ADA's Atalpuram Township — ₹500Cr+ public investment adjoining Kakua–Baad belt.",
-    },
-    {
-      icon: Route,
-      title: "Infrastructure Boom",
-      text: "NH-19 six-lane expansion programme + Yamuna Expressway parallel route.",
-    },
-    {
-      icon: TrendingUp,
-      title: "Appreciation History",
-      text: "Etmadpur land has averaged ~28% annual appreciation over the last 5 years.",
-    },
-    {
-      icon: TrainFront,
-      title: "Multi-Modal Connectivity",
-      text: "Tundla Junction + NH-19 + Yamuna Expressway in a single 40 km corridor.",
-    },
-  ];
-  return (
-    <div
-      className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-5"
-      aria-label="Investment thesis"
-    >
-      {items.map(({ icon: Icon, title, text }) => (
-        <div
-          key={title}
-          className="p-5 border border-border bg-bg-card/40 flex flex-col items-start"
-        >
-          <span
-            className="w-10 h-10 mb-4 flex items-center justify-center"
-            style={{
-              border: "1px solid rgba(224,192,104,0.45)",
-              color: "#e0c068",
-              borderRadius: 2,
-            }}
-          >
-            <Icon className="w-5 h-5" />
-          </span>
-          <div
-            className="text-[10px] uppercase font-semibold mb-2"
-            style={{ color: "#e0c068", letterSpacing: "0.28em" }}
-          >
-            {title}
-          </div>
-          <div className="text-sm font-light text-text-muted leading-snug">
-            {text}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 const BELTS: {
+  id: string;
   tag: string;
   title: string;
   text: string;
@@ -646,46 +699,46 @@ const BELTS: {
   featured: boolean;
 }[] = [
   {
+    id: "kakua",
     tag: "Featured",
     title: "Kakua–Baad Belt",
-    text:
-      "Strategic land adjacent to UP Govt's Atalpuram Township (ADA) on the Agra–Gwalior corridor. Earliest appreciation, deepest discount.",
-    href: "https://www.google.com/maps/search/Kakua+Bhandai+Atalpuram+Agra/@27.1300,77.9700,12z",
+    text: "Adjacent to UP Government's ₹500Cr+ Atalpuram Township (ADA). Maximum appreciation expected — early investor advantage on the Gwalior Road side of NH-19.",
+    href: "https://www.google.com/maps/search/Kakua+Bhandai+Atalpuram+Agra",
     featured: true,
   },
   {
-    tag: "Belt 01",
-    title: "Etmadpur–Khandauli Road",
-    text:
-      "Agricultural and residential parcels along the Khandauli junction belt — strong road frontage, rapid appreciation history.",
-    href: "https://www.google.com/maps/search/Khandauli+Agra/@27.2700,78.2200,12z",
+    id: "etmadpur",
+    tag: "R³S Active",
+    title: "Etmadpur — Saroj Residency",
+    text: "Our active project — 100 sq.yd plots from ₹8.99L. Office at S.R. Super Market, Barhan Chauraha. Personally walked by Raju ji.",
+    href: "https://www.google.com/maps/search/Saroj+Residency+Etmadpur+Agra",
     featured: false,
   },
   {
+    id: "khandauli",
     tag: "Belt 02",
-    title: "Etmadpur–Barhan Road",
-    text:
-      "Highway-adjacent commercial land at Barhan Chauraha. Home to R³S Realty Developers' HQ at S.R. Super Market.",
-    href: "https://www.google.com/maps/search/Barhan+Etmadpur+road/@27.2400,78.2500,12z",
+    title: "Khandauli — NH-19 Junction",
+    text: "Maximum frontage on NH-19. Agricultural plots with commercial potential. Railway connectivity nearby. Rapid transition zone.",
+    href: "https://www.google.com/maps/search/Khandauli+Agra",
     featured: false,
   },
   {
-    tag: "Belt 03",
-    title: "Tundla–Etmadpur–Agra Belt",
-    text:
-      "Premium plots along the high-growth Tundla corridor with direct NH-19 access and rail proximity.",
-    href: "https://www.google.com/maps/search/Tundla+Etmadpur+Agra/@27.2200,78.2700,11z",
+    id: "barhan",
+    tag: "HQ · Belt 03",
+    title: "Barhan Chauraha — Direct NH-19",
+    text: "Highway-frontage commercial land at Barhan Chauraha. Busiest junction on the corridor. Home to R³S HQ at S.R. Super Market.",
+    href: "https://www.google.com/maps/search/Barhan+Chauraha+Etmadpur+Agra",
     featured: false,
   },
 ];
 
 const LOCATIONS: { tag: string; title: string; sub: string; href: string }[] = [
-  { tag: "R³S Active", title: "Saroj Residency", sub: "Near Sawai Dham Ashram, Etmadpur", href: "https://www.google.com/maps/search/Sawai+Dham+Ashram+Etmadpur+Agra/@27.2308,78.2614,13z" },
-  { tag: "R³S Active", title: "S.R. Super Market", sub: "Highway shops, Barhan Chauraha", href: "https://www.google.com/maps/search/Barhan+Chauraha+Etmadpur+Agra/@27.2400,78.2400,13z" },
-  { tag: "Land Bank", title: "Etmadpur–Khandauli Road", sub: "Agricultural & residential parcels", href: "https://www.google.com/maps/search/Khandauli+Agra/@27.2700,78.2200,12z" },
-  { tag: "Land Bank", title: "Etmadpur–Barhan Road", sub: "Highway-adjacent commercial parcels", href: "https://www.google.com/maps/search/Barhan+Etmadpur+road/@27.2400,78.2500,12z" },
-  { tag: "Land Bank", title: "Tundla–Etmadpur–Agra Belt", sub: "NH-19 corridor land parcels", href: "https://www.google.com/maps/search/Tundla+Etmadpur+Agra/@27.2200,78.2700,11z" },
-  { tag: "Featured · Govt Adjacent", title: "Kakua–Baad Belt", sub: "Adjoining ADA's Atalpuram Township", href: "https://www.google.com/maps/search/Kakua+Bhandai+Atalpuram+Agra/@27.1300,77.9700,12z" },
+  { tag: "R³S Active", title: "Saroj Residency", sub: "Near Sawai Dham Ashram, Etmadpur", href: "https://www.google.com/maps/search/Sawai+Dham+Ashram+Etmadpur+Agra" },
+  { tag: "R³S Active", title: "S.R. Super Market", sub: "Highway shops, Barhan Chauraha", href: "https://www.google.com/maps/search/Barhan+Chauraha+Etmadpur+Agra" },
+  { tag: "Land Bank",  title: "Etmadpur–Khandauli Road", sub: "Agricultural & residential parcels", href: "https://www.google.com/maps/search/Khandauli+Agra" },
+  { tag: "Land Bank",  title: "Etmadpur–Barhan Road",    sub: "Highway-adjacent commercial parcels", href: "https://www.google.com/maps/search/Barhan+Etmadpur+road" },
+  { tag: "Land Bank",  title: "Tundla–Etmadpur–Agra Belt", sub: "NH-19 corridor land parcels", href: "https://www.google.com/maps/search/Tundla+Junction+Firozabad" },
+  { tag: "Featured · Govt Adjacent", title: "Kakua–Baad Belt", sub: "Adjoining ADA's Atalpuram Township", href: "https://www.google.com/maps/search/Kakua+Bhandai+Atalpuram+Agra" },
 ];
 
 export default function LandBank() {
@@ -711,9 +764,10 @@ export default function LandBank() {
           />
         </div>
 
-        {/* NEW: animated counter row */}
+        {/* Animated stat row */}
         <CorridorStats />
 
+        {/* Corridor map */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -723,10 +777,10 @@ export default function LandBank() {
           <CorridorMap />
         </motion.div>
 
-        {/* NEW: investment psychology row */}
-        <InvestmentPsychology />
+        {/* Investment icons row */}
+        <InvestmentIcons />
 
-        {/* Belt cards */}
+        {/* Belt cards (2×2) */}
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -736,41 +790,54 @@ export default function LandBank() {
         >
           {BELTS.map((belt) => (
             <motion.a
-              key={belt.title}
+              key={belt.id}
               href={belt.href}
               target="_blank"
               rel="noopener noreferrer"
               title={`${belt.title} on Google Maps`}
               variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
               transition={{ duration: 0.5 }}
-              className={`belt-card block ${belt.featured ? "featured" : ""}`}
+              className={`r3s-belt-card relative block ${belt.featured ? "is-featured" : ""}`}
             >
               {belt.featured && (
                 <div
-                  className="absolute top-3 right-4 text-[10px] uppercase font-bold px-2 py-1"
-                  style={{ color: "#0a1a0a", background: "var(--gold)", letterSpacing: "0.22em", borderRadius: 2 }}
+                  className="absolute top-3 right-4 uppercase font-bold px-2 py-1"
+                  style={{ fontSize: 10, background: "#C8860A", color: "#fff", letterSpacing: "0.22em", borderRadius: 2 }}
                 >
                   ★ Featured
                 </div>
               )}
               <div
-                className="text-[10px] uppercase font-semibold mb-3"
-                style={{ color: "#e0c068", letterSpacing: "0.32em" }}
+                className="uppercase font-semibold mb-3"
+                style={{ color: "#C8860A", fontSize: 10, letterSpacing: "0.32em" }}
               >
                 {belt.tag}
               </div>
               <h3
-                className="font-display text-2xl md:text-3xl"
-                style={{ color: "rgb(243,236,220)", fontFamily: "'Cormorant Garamond', Georgia, serif", fontWeight: 500 }}
+                style={{
+                  fontFamily: "'Cormorant Garamond', Georgia, serif",
+                  fontSize: "clamp(22px, 2.4vw, 28px)",
+                  fontWeight: 500,
+                  color: "var(--text)",
+                  lineHeight: 1.2,
+                }}
               >
                 {belt.title}
               </h3>
-              <p className="mt-3 text-base font-light leading-relaxed" style={{ color: "rgb(168,153,119)" }}>
+              <p
+                style={{
+                  marginTop: 12,
+                  fontSize: 15,
+                  fontWeight: 300,
+                  color: "var(--text-muted)",
+                  lineHeight: 1.65,
+                }}
+              >
                 {belt.text}
               </p>
               <div
-                className="mt-4 text-[10px] uppercase font-semibold inline-flex items-center gap-1"
-                style={{ color: "#e0c068", letterSpacing: "0.32em" }}
+                className="mt-4 uppercase font-semibold inline-flex items-center gap-1"
+                style={{ color: "#C8860A", fontSize: 10, letterSpacing: "0.32em" }}
               >
                 View on Google Maps <ArrowUpRight className="w-3 h-3" />
               </div>
@@ -820,7 +887,7 @@ export default function LandBank() {
           ))}
         </motion.ul>
 
-        {/* Google Maps iframe — ground truth */}
+        {/* Google Maps iframe */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -841,6 +908,38 @@ export default function LandBank() {
           />
         </motion.div>
       </div>
+
+      <style>{`
+        .r3s-belt-card {
+          background: rgba(245,240,232,0.8);
+          backdrop-filter: blur(8px);
+          -webkit-backdrop-filter: blur(8px);
+          border: 1px solid rgba(200,134,10,0.15);
+          border-left: 4px solid #C8860A;
+          border-radius: 2px;
+          padding: 24px;
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+          text-decoration: none;
+          color: inherit;
+        }
+        html.dark .r3s-belt-card {
+          background: rgba(15,25,15,0.85);
+        }
+        .r3s-belt-card:hover {
+          transform: translateX(5px);
+          box-shadow: 4px 0 20px rgba(200,134,10,0.15);
+        }
+        .r3s-belt-card.is-featured {
+          background: linear-gradient(135deg, rgba(200,134,10,0.08), rgba(245,240,232,0.9));
+          border: 1px solid rgba(200,134,10,0.4);
+          border-left: 4px solid #C8860A;
+        }
+        html.dark .r3s-belt-card.is-featured {
+          background: rgba(30,20,5,0.9);
+          border: 1px solid rgba(200,134,10,0.4);
+          border-left: 4px solid #C8860A;
+        }
+      `}</style>
     </section>
   );
 }
