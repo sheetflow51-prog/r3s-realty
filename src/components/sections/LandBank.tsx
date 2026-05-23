@@ -37,7 +37,7 @@ const NODES: CorridorNode[] = [
     id: "agra",
     name: "AGRA",
     km: 0,
-    cx: 80,  cy: 280, r: 8,
+    cx: 80,  cy: 300, r: 8,
     onHighway: true,
     variant: "anchor",
     title: "Agra",
@@ -50,7 +50,7 @@ const NODES: CorridorNode[] = [
     id: "etmadpur",
     name: "ETMADPUR",
     km: 16,
-    cx: 530, cy: 260, r: 10,
+    cx: 420, cy: 295, r: 10,
     onHighway: true,
     variant: "node",
     title: "Etmadpur",
@@ -64,7 +64,7 @@ const NODES: CorridorNode[] = [
     id: "khandauli",
     name: "KHANDAULI",
     km: 18,
-    cx: 720, cy: 250, r: 10,
+    cx: 700, cy: 210, r: 10,
     onHighway: true,
     variant: "node",
     title: "Khandauli Belt",
@@ -77,7 +77,7 @@ const NODES: CorridorNode[] = [
     id: "barhan",
     name: "BARHAN",
     km: 22,
-    cx: 900, cy: 248, r: 13,
+    cx: 900, cy: 195, r: 13,
     onHighway: true,
     variant: "hq",
     badge: "★ R³S HQ · DIRECT NH-19",
@@ -86,13 +86,13 @@ const NODES: CorridorNode[] = [
     desc: "R³S office at S.R. Super Market here. Highest daily footfall on the corridor. Ideal for commercial investment.",
     stats: "S.R. Super Market · Highway shops",
     href: "https://www.google.com/maps/search/Barhan+Chauraha+Etmadpur+Agra",
-    labelAbove: false,
+    labelAbove: true,
   },
   {
     id: "tundla",
     name: "TUNDLA JCT",
     km: 35,
-    cx: 1150, cy: 240, r: 10,
+    cx: 1150, cy: 185, r: 10,
     onHighway: true,
     variant: "node",
     title: "Tundla Junction Belt",
@@ -118,7 +118,7 @@ const KAKUA = {
 
 // NH-19 path — gentler curve, all 5 main nodes on it
 const NH19_PATH =
-  "M 80,280 C 200,275 320,265 430,262 L 530,260 L 720,250 L 900,248 C 1000,247 1080,243 1150,240";
+  "M 80,300 C 180,300 280,300 420,295 C 530,290 620,250 700,210 L 900,195 C 1000,190 1080,188 1150,185";
 
 // Yamuna Expressway path — sweeps south-west away from Agra
 const YAMUNA_PATH = "M 80,380 C 180,400 240,420 280,440 C 320,460 360,470 420,470";
@@ -327,10 +327,10 @@ function CorridorMap() {
           <rect width="1200" height="560" fill="url(#map-grid)" />
 
           {/* Secondary route — Delhi-Howrah Rail (top) */}
-          <line x1="80" y1="150" x2="1150" y2="150"
+          <line x1="80" y1="115" x2="1150" y2="115"
                 stroke="#6B5040" strokeWidth="1"
                 strokeDasharray="12,4,3,4" opacity="0.35" />
-          <text x="100" y="142" fontFamily="'DM Sans', sans-serif" fontSize="9"
+          <text x="100" y="108" fontFamily="'DM Sans', sans-serif" fontSize="9"
                 fill="var(--corridor-muted)" letterSpacing="0.2em" opacity="0.85">
             DELHI – HOWRAH RAIL
           </text>
@@ -356,7 +356,7 @@ function CorridorMap() {
                 fill="none" className="corridor-road-dashes" />
 
           {/* NH-19 label */}
-          <text x="600" y="220" textAnchor="middle"
+          <text x="780" y="155" textAnchor="middle"
                 fontFamily="'DM Sans', sans-serif" fontSize="11"
                 fontWeight="700" fill="#C8860A" letterSpacing="0.3em">
             NH-19 · AGRA → KOLKATA
@@ -466,8 +466,8 @@ function CorridorMap() {
             );
           })}
 
-          {/* Barhan HQ badge — placed safely BELOW the label, not overlapping */}
-          <g transform="translate(820,295)">
+          {/* Barhan HQ badge — placed safely BELOW the node, not overlapping label */}
+          <g transform="translate(820,220)">
             <rect width="160" height="22" rx="11"
                   fill="rgba(200,134,10,0.18)"
                   stroke="#C8860A" strokeWidth="0.8" />
