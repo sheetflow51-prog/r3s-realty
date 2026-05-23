@@ -11,11 +11,11 @@ interface GalleryImage {
 const IMG_LIST: GalleryImage[] = [
   {
     src: "/images/approved-colony.png",
-    alt: "RERA approved colony layout R3S Realty Agra",
+    alt: "R³S Realty approved colony layout Etmadpur Agra",
   },
   {
     src: "/images/clear-titles2.png",
-    alt: "Clear title RERA approved plots R3S Realty Agra",
+    alt: "Clear title plots R3S Realty Agra",
   },
   {
     src: "/images/hero-banner.png",

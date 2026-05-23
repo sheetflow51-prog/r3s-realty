@@ -10,8 +10,8 @@ interface FAQ {
 
 const FAQS: FAQ[] = [
   {
-    q: "Are the plots RERA approved?",
-    a: "Yes, RERA registration is applied for Saroj Residency. All plots have clear titles and approved colony layout. Documentation can be reviewed at our office in S.R. Super Market, Barhan Chauraha.",
+    q: "Do the plots have clear legal titles?",
+    a: "Yes, Verified documentation is in place for Saroj Residency. All plots have clear titles and approved colony layout. Documentation can be reviewed at our office in S.R. Super Market, Barhan Chauraha.",
   },
   {
     q: "What is the starting price of plots in Etmadpur Agra?",

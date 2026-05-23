@@ -40,7 +40,7 @@ const SLIDES: { src: string; alt: string; focal: string }[] = [
 ];
 
 const TICKER_ITEMS = [
-  "RERA Applied",
+  "Verified Documentation",
   "Clear Title",
   "Bank Approved",
   "NH-19 Corridor",
@@ -55,7 +55,7 @@ const TICKER_ITEMS = [
 
 const TRUST_BADGES: { icon: typeof MapPin; label: string; sub: string }[] = [
   { icon: MapPin, label: "NH-19 Corridor", sub: "Agra–Kolkata growth belt" },
-  { icon: ShieldCheck, label: "RERA Applied", sub: "Clear titles · approved colony" },
+  { icon: ShieldCheck, label: "Verified Documentation", sub: "Clear titles · approved colony" },
 ];
 
 export default function Hero() {
@@ -204,7 +204,7 @@ export default function Hero() {
                   lineHeight: 1.7,
                 }}
               >
-                Saroj Residency &mdash; RERA-applied residential plots from
+                Saroj Residency &mdash; Verified Documentation residential plots from
                 ₹8.99L, on the NH-19 Agra–Kolkata corridor. Three strategic
                 land belts. One trusted name &mdash;{" "}
                 <span style={{ color: "#f7efdc" }}>Raju Sharma</span>.

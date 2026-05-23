@@ -6,17 +6,17 @@ const ITEMS = [
   {
     title: "Clear Legal Titles",
     text:
-      "Every plot and shop comes with verified documentation, RERA approval where applicable, and bank financing options ready.",
+      "Verified documentation on every plot and shop. Bank financing options ready. No surprises at registry — every paper walked through before you sign.",
   },
   {
     title: "Strategic Locations",
     text:
-      "From Etmadpur core to Khandauli, Barhan, Tundla, and the Kakua–Baad belt adjoining ADA's Atalpuram township.",
+      "From the Etmadpur core to Khandauli, Barhan, Tundla, and the Kakua–Baad belt adjoining ADA's flagship Atalpuram township.",
   },
   {
     title: "Personal Attention",
     text:
-      "Direct relationship with Raju Sharma — no agents, no middlemen, no inflated commissions.",
+      "Direct relationship with Raju Sharma — no agents, no middlemen, no inflated commissions. Just chai, paperwork, and the land itself.",
   },
 ];
 
@@ -24,12 +24,12 @@ const TRUST_CARDS = [
   {
     image: "/images/approved-colony.png",
     label: "Approved Colony",
-    alt: "RERA approved colony layout R3S Realty Agra",
+    alt: "R³S Realty approved colony layout Etmadpur Agra",
   },
   {
     image: "/images/clear-titles2.png",
     label: "Clear Titles",
-    alt: "Clear title RERA approved plots R3S Realty Agra",
+    alt: "Clear title plots R3S Realty Agra",
   },
   {
     image: "/images/planned-dev2.png",
@@ -68,9 +68,9 @@ export default function About() {
         <SectionHeading
           number="01"
           label="About"
-          title="RERA Approved Colony | Clear Titles | Planned Development"
+          title="Founded by Raju Sharma | Verified Documentation | Planned Development"
           emWord="Clear Titles"
-          subtitle="Built on trust. Rooted in Etmadpur. Every project from R³S Realty carries verified documentation, approved layouts, and personally walked plots."
+          subtitle="Built on trust. Rooted in Etmadpur. Every project from R³S Realty & Developers carries verified documentation, approved layouts, and personally walked plots."
         />
 
         <div className="grid lg:grid-cols-[55fr_45fr] gap-12 lg:gap-20 items-start">
@@ -82,13 +82,13 @@ export default function About() {
             className="space-y-6 body-text text-base md:text-lg max-w-2xl"
           >
             <p>
-              R³S Realty Developers was founded by{" "}
+              R³S Realty and Developers was founded by{" "}
               <span className="text-text">Raju Sharma</span> — a name that
               Etmadpur has known for years. What began as a quiet conviction —
-              that families here deserve world-class plotting at honest prices —
-              has grown into a real estate house spanning residential plotting,
-              commercial shops, and a strategic land bank across the Agra
-              outskirts.
+              that families here deserve world-class plotting at honest prices
+              — has grown into a real estate house spanning residential
+              plotting, commercial shops, and a strategic land bank across the
+              Agra outskirts.
             </p>
             <p>
               Our office at S.R. Super Market, near Barhan Chauraha in

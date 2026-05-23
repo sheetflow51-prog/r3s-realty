@@ -33,7 +33,7 @@ const PROJECTS: Project[] = [
       },
       {
         src: "/images/approved-colony.png",
-        alt: "RERA approved colony layout R3S Realty Agra",
+        alt: "R³S Realty approved colony layout Etmadpur Agra",
       },
       {
         src: "/images/plots-aerial.png",

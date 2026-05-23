@@ -4,7 +4,7 @@ import SectionHeading from "../shared/SectionHeading";
 const FEATURES = [
   {
     title: "Clear Legal Titles",
-    body: "Every plot is title-searched and RERA-aligned. We hand over a complete documentation file with the registry — including mutation guidance.",
+    body: "Every plot is title-searched and bank-approved. We hand over a complete documentation file with the registry — including mutation guidance.",
   },
   {
     title: "Strategic Locations",
