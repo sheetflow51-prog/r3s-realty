@@ -7,7 +7,7 @@ import {
   buildPhoneLink,
   buildWhatsAppLink,
 } from "../../lib/constants";
-import BrandMark from "../shared/BrandMark";
+import LotusLogo from "../icons/LotusLogo";
 
 const FOOTER_LINKS = [
   { label: "About Us", href: "#about" },
@@ -62,7 +62,7 @@ export default function Footer() {
     >
       <div className="container-page">
         <div className="flex items-center gap-4 mb-12">
-          <BrandMark size={56} tone="dark" />
+          <LotusLogo height={72} darkMode showText />
         </div>
 
         <h2
@@ -73,7 +73,7 @@ export default function Footer() {
             color: "rgb(232,224,208)",
           }}
         >
-          R³S Realty Developers LLP
+          R³S Realty &amp; Developers LLP
         </h2>
 
         <p
@@ -96,9 +96,9 @@ export default function Footer() {
               itemType="https://schema.org/PostalAddress"
             >
               <div className="font-display text-base mb-2" style={{ color: "rgb(232,224,208)" }}>
-                R³S Realty Developers LLP
+                R³S Realty &amp; Developers LLP
               </div>
-              <span itemProp="streetAddress">S.R. Super Market, Barhan Chauraha</span>
+              <span itemProp="streetAddress">S.R. Super Market, Near Barhan Chauraha</span>
               <br />
               <span itemProp="addressLocality">Etmadpur</span>,{" "}
               <span itemProp="addressRegion">Agra</span>{" "}
@@ -177,7 +177,7 @@ export default function Footer() {
             color: "#7a7060",
           }}
         >
-          <div>© 2026 R³S Realty Developers · Founded by Raju Sharma</div>
+          <div>© 2026 R³S Realty &amp; Developers LLP · Founded by Raju Sharma</div>
           <div className="flex items-center gap-3">
             <a
               href={SOCIAL.facebook}

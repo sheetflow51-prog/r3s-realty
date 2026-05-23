@@ -7,7 +7,7 @@ import {
   buildPhoneLink,
 } from "../../lib/constants";
 import { useTheme } from "../../hooks/useTheme";
-import BrandMark from "../shared/BrandMark";
+import LotusLogo from "../icons/LotusLogo";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -46,24 +46,18 @@ export default function Navbar() {
       <nav
         className={`transition-all duration-500 ${
           scrolled
-            ? "bg-bg/95 backdrop-blur-md border-b border-border py-3"
-            : "bg-transparent py-5"
+            ? "bg-bg/95 backdrop-blur-md border-b border-border py-2"
+            : "bg-transparent py-3"
         }`}
       >
         <div className="container-page flex items-center justify-between">
           <a
             href="#home"
-            className="flex items-center gap-3"
+            className="flex items-center gap-2"
             aria-label="R³S Realty Developers — Home"
             title="R³S Realty Developers — Home"
           >
-            <BrandMark size={44} />
-            <div className="leading-tight hidden sm:block">
-              <div className="font-display text-xl text-text font-medium">R³S Realty</div>
-              <div className="text-[10px] uppercase tracking-[0.32em] text-gold/90 font-semibold">
-                Developers
-              </div>
-            </div>
+            <LotusLogo height={44} darkMode={isDark} showText={true} />
           </a>
 
           <div className="hidden lg:flex items-center gap-10">
